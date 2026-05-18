@@ -3,62 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profi 3D Editor - Zaoblení a Outline</title>
+    <title>Parametrický 3D Generátor s Historií</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1e1e1e; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #fff; }
         canvas { display: block; }
         
-        /* Panely */
         .panel {
             position: absolute; top: 15px; z-index: 100;
-            background: rgba(30, 30, 30, 0.9); backdrop-filter: blur(10px);
-            padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            border: 1px solid rgba(255,255,255,0.1); width: 280px; box-sizing: border-box;
+            background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px);
+            padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); 
+            border: 1px solid rgba(255,255,255,0.1); width: 320px; box-sizing: border-box;
+            max-height: 95vh; overflow-y: auto;
         }
-        #ui-panel { left: 15px; }
-        #properties-panel { right: 15px; display: none; }
         
-        h3 { margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 8px;}
-        .control-group { margin-bottom: 20px; }
+        .panel::-webkit-scrollbar { width: 6px; }
+        .panel::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        
+        #ui-panel { left: 15px; width: 260px;}
+        #properties-panel { right: 15px; display: block; /* V parametrickém editoru je pravý panel zobrazen vždy */ }
+        
+        h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; color: #4CAF50; border-bottom: 1px solid #444; padding-bottom: 8px;}
+        .section-title { font-size: 12px; color: #aaa; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;}
         
         button {
             width: 100%; padding: 10px; margin-bottom: 8px; cursor: pointer;
             background: #3a3a3a; color: #fff; border: none; border-radius: 6px; font-weight: 600;
-            transition: all 0.2s ease;
+            transition: 0.2s;
         }
         button:hover { background: #4a4a4a; }
-        button:active { transform: scale(0.98); }
-        button.active { background: #4CAF50; color: white; box-shadow: 0 0 10px rgba(76, 175, 80, 0.4); }
-        
-        .row { display: flex; gap: 6px; }
-        .row button { flex: 1; }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .grid-2 button { margin-bottom: 0; font-size: 13px; padding: 8px; }
-        
-        input[type="text"], input[type="number"], select, input[type="range"] {
-            width: 100%; padding: 8px 10px; margin-bottom: 12px; box-sizing: border-box;
-            background: #2b2b2b; border: 1px solid #555; border-radius: 6px; color: white; font-size: 14px;
-        }
-        input[type="text"]:focus, input[type="number"]:focus, select:focus { outline: none; border-color: #2196F3; }
-        input[type="color"] { width: 100%; height: 40px; padding: 2px; background: #2b2b2b; border: 1px solid #555; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
-        
-        label { display: block; font-size: 12px; margin-bottom: 4px; color: #ccc; }
-        .flex-row { display: flex; gap: 10px; }
-        .flex-row div { flex: 1; }
         
         #undoBtn { background: #ff9800; color: white; margin-bottom: 15px;}
         #undoBtn:hover { background: #f57c00; }
-        #deleteBtn { background: #d32f2f; color: white; }
-        #deleteBtn:hover { background: #b71c1c; }
-        #exportBtn { background: #2196F3; color: white; font-weight: bold; margin-bottom: 0; font-size: 15px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3); }
+        
+        .template-btn { background: #2c3e50; border: 1px solid #34495e; text-align: left; padding: 12px; }
+        .template-btn:hover { background: #34495e; border-color: #2196F3;}
+        .template-btn span { display: block; font-size: 11px; color: #999; margin-top: 4px; font-weight: normal;}
+        
+        #saveTplBtn { background: #1976d2; font-size: 12px; margin-top: 10px;}
+        #saveTplBtn:hover { background: #1565c0; }
+
+        /* Styly pro vlastní šablony */
+        .custom-tpl-item { display: flex; gap: 5px; margin-bottom: 8px;}
+        .custom-tpl-item .template-btn { flex-grow: 1; margin-bottom: 0; padding: 8px 12px; }
+        .custom-tpl-item .del-btn { width: 36px; background: #d32f2f; margin-bottom: 0; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .custom-tpl-item .del-btn:hover { background: #b71c1c; }
+        
+        #exportBtn { background: #2196F3; color: white; font-weight: bold; font-size: 15px; margin-top: 10px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4); }
         #exportBtn:hover { background: #1976d2; }
+        
+        .param-group { margin-bottom: 12px; }
+        .param-group label { display: flex; justify-content: space-between; font-size: 12px; color: #ddd; margin-bottom: 4px; }
+        .param-group input[type="range"] { width: 100%; cursor: pointer; }
+        .param-group input[type="text"] { 
+            width: 100%; padding: 8px; box-sizing: border-box; background: #111; 
+            border: 1px solid #444; border-radius: 4px; color: white; font-family: inherit;
+        }
         
         #info-box {
             position: absolute; bottom: 15px; left: 15px; background: rgba(0,0,0,0.7);
-            color: #ccc; padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; line-height: 1.5;
+            color: #ccc; padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none;
         }
-        .highlight { color: #4CAF50; font-weight: bold; }
     </style>
     
     <script type="importmap">
@@ -74,401 +78,336 @@
     <div id="ui-panel" class="panel">
         <button id="undoBtn">↩ Krok zpět (Ctrl+Z)</button>
 
-        <div class="control-group">
-            <h3>Nástroje úprav</h3>
-            <div class="row">
-                <button id="mode-translate" class="active">Posun</button>
-                <button id="mode-rotate">Rotace</button>
-                <button id="mode-scale">Velikost</button>
-            </div>
-            <button id="deleteBtn">🗑 Smazat vybrané</button>
-        </div>
+        <h3>Základní Šablony</h3>
+        <button class="template-btn" onclick="loadTemplate('classic')">
+            Klasická Klíčenka
+            <span>60x20 mm, text uprostřed, dírka vpravo</span>
+        </button>
+        <button class="template-btn" onclick="loadTemplate('large')">
+            Velká Jmenovka (Dveře)
+            <span>100x40 mm, velký text, bez dírky</span>
+        </button>
+        <button class="template-btn" onclick="loadTemplate('tag')">
+            Štítek na obojek
+            <span>40x15 mm, malý text, dírka blízko kraje</span>
+        </button>
 
-        <div class="control-group">
-            <h3>Přidat objekty</h3>
-            <div class="grid-2">
-                <button id="addCubeBtn">+ Kostka</button>
-                <button id="addSphereBtn">+ Koule</button>
-                <button id="addCylinderBtn">+ Válec</button>
-                <button id="addConeBtn">+ Kužel</button>
-                <button id="addTorusBtn" style="grid-column: span 2;">+ Prstenec (Torus)</button>
+        <button id="saveTplBtn">+ Uložit aktuální jako šablonu</button>
+        <div id="custom-templates" style="margin-top: 10px;">
             </div>
-            <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
-                <button id="addTextBtn">+ Přidat 3D Text</button>
-            </div>
-        </div>
 
-        <button id="exportBtn">⬇ Exportovat do STL</button>
+        <button id="exportBtn">⬇ Stáhnout STL</button>
     </div>
 
     <div id="properties-panel" class="panel">
-        <h3 id="prop-title">Vlastnosti: Objekt</h3>
+        <h3>Parametry Štítku</h3>
         
-        <label>Barva materiálu:</label>
-        <input type="color" id="prop-color">
-
-        <div id="prop-text-group">
-            <label>Obsah textu:</label>
-            <input type="text" id="prop-text-input">
-            
-            <label>Font:</label>
-            <select id="prop-font-select">
-                <option value="helvetiker">Helvetiker (Základní)</option>
-                <option value="droid">Droid Sans (Tenčí)</option>
-                <option value="optimer">Optimer (Elegantní)</option>
-                <option value="gentilis">Gentilis (Patkové)</option>
-            </select>
+        <div class="param-group">
+            <label>Nápis: <input type="text" id="p_text" value="Klíčenka"></label>
         </div>
 
-        <div id="prop-rounding-group">
-            <label>Zaoblení hran (mm): <span id="prop-rounding-val">0</span></label>
-            <input type="range" id="prop-rounding-slider" min="0" max="3" step="0.1" value="0">
+        <div class="section-title">Rozměry podložky</div>
+        <div class="param-group">
+            <label>Šířka (mm): <span id="v_width">60</span></label>
+            <input type="range" id="p_width" min="20" max="150" value="60">
+        </div>
+        <div class="param-group">
+            <label>Výška (mm): <span id="v_height">20</span></label>
+            <input type="range" id="p_height" min="10" max="80" value="20">
+        </div>
+        <div class="param-group">
+            <label>Tloušťka podložky (mm): <span id="v_depth">3</span></label>
+            <input type="range" id="p_depth" min="1" max="10" step="0.5" value="3">
         </div>
 
-        <label>Fyzická velikost (v mm):</label>
-        <div class="flex-row">
-            <div><label>X (Šířka)</label><input type="number" id="prop-size-x" step="1"></div>
-            <div><label>Y (Výška)</label><input type="number" id="prop-size-y" step="1"></div>
-            <div><label>Z (Hloubka)</label><input type="number" id="prop-size-z" step="1"></div>
+        <div class="section-title">Otvor na kroužek (Vpravo)</div>
+        <div class="param-group">
+            <label>Poloměr dírky (mm): <span id="v_holeRad">3</span></label>
+            <input type="range" id="p_holeRad" min="0" max="10" step="0.5" value="3">
+            <small style="color:#888; font-size:10px;">(0 = žádná dírka)</small>
+        </div>
+        <div class="param-group">
+            <label>Vzdálenost od kraje: <span id="v_holeOff">6</span></label>
+            <input type="range" id="p_holeOff" min="2" max="20" value="6">
+        </div>
+
+        <div class="section-title">Nastavení Textu</div>
+        <div class="param-group">
+            <label>Velikost textu: <span id="v_textSize">10</span></label>
+            <input type="range" id="p_textSize" min="5" max="30" value="10">
+        </div>
+        <div class="param-group">
+            <label>Tloušťka písma (3D): <span id="v_textDepth">2</span></label>
+            <input type="range" id="p_textDepth" min="0.5" max="10" step="0.5" value="2">
+        </div>
+        <div class="param-group">
+            <label>Posun textu X (L/P): <span id="v_textX">-5</span></label>
+            <input type="range" id="p_textX" min="-50" max="50" value="-5">
+        </div>
+        <div class="param-group">
+            <label>Posun textu Y (N/D): <span id="v_textY">0</span></label>
+            <input type="range" id="p_textY" min="-30" max="30" value="0">
         </div>
     </div>
 
-    <div id="info-box">
-        Výběr: Levý klik | Odznačení: Klik do prázdna | 1 dílek = 10 mm <br>
-        <span class="highlight">Drž SHIFT pro přesné otáčení a posun po 10mm</span>
-    </div>
+    <div id="info-box">Kamera: Tažení myší | Zoom: Kolečko | Undo: Ctrl+Z</div>
     
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { TransformControls } from 'three/addons/controls/TransformControls.js';
         import { STLExporter } from 'three/addons/exporters/STLExporter.js';
         import { FontLoader } from 'three/addons/loaders/FontLoader.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'; // IMPORT PRO ZAOBLENOU KOSTKU
         
-        // --- 1. ZÁKLAD SCÉNY ---
+        // --- SCÉNA ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a1a1a);
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.set(60, 60, 100); 
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, -50, 100); 
+        
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0x888888));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(100, 200, 150);
+        const ambientLight = new THREE.AmbientLight(0x666666);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(50, 50, 100);
         scene.add(dirLight);
+        const dirLight2 = new THREE.DirectionalLight(0x4444ff, 0.5); 
+        dirLight2.position.set(-50, -50, -50);
+        scene.add(dirLight2);
+
         scene.add(new THREE.GridHelper(200, 20, 0x444444, 0x2b2b2b));
 
-        // --- OUTLINE (Ohraničení vybraného objektu) ---
-        const selectionBox = new THREE.BoxHelper(undefined, 0x00ff00); // Zelený obrys
-        selectionBox.visible = false;
-        selectionBox.material.depthTest = false; // Bude vidět i přes jiné objekty
-        selectionBox.material.transparent = true;
-        scene.add(selectionBox);
-
-        // --- 2. OVLÁDÁNÍ A GIZMO ---
         const orbitControls = new OrbitControls(camera, renderer.domElement);
         orbitControls.enableDamping = true;
-        orbitControls.dampingFactor = 0.05;
-        
-        const transformControl = new TransformControls(camera, renderer.domElement);
-        transformControl.setSize(1.5);
-        scene.add(transformControl);
 
-        const objects = [];
+        const keychainGroup = new THREE.Group();
+        scene.add(keychainGroup);
 
-        // --- 3. SYSTÉM HISTORIE ---
-        const history = [];
-        let transformStartState = null;
-
-        transformControl.addEventListener('dragging-changed', (event) => {
-            orbitControls.enabled = !event.value; 
-            if (event.value) {
-                const obj = transformControl.object;
-                transformStartState = { pos: obj.position.clone(), rot: obj.quaternion.clone(), scl: obj.scale.clone() };
-            } else if (transformStartState) {
-                history.push({ type: 'transform', object: transformControl.object, oldPos: transformStartState.pos, oldRot: transformStartState.rot, oldScl: transformStartState.scl });
-                transformStartState = null;
-            }
-        });
-
-        transformControl.addEventListener('change', () => {
-            updatePropertiesPanelValues();
-            if (selectedObject) selectionBox.update(); // Aktualizuj obrys během tahání
-        });
-
-        function undo() {
-            if (history.length === 0) return; 
-            const action = history.pop();
-            transformControl.detach(); 
-            hidePropertiesPanel();
-
-            if (action.type === 'add') {
-                scene.remove(action.object);
-                const index = objects.indexOf(action.object);
-                if (index > -1) objects.splice(index, 1);
-            } else if (action.type === 'delete') {
-                scene.add(action.object);
-                objects.push(action.object);
-                selectObject(action.object); 
-            } else if (action.type === 'transform') {
-                action.object.position.copy(action.oldPos);
-                action.object.quaternion.copy(action.oldRot);
-                action.object.scale.copy(action.oldScl);
-                selectObject(action.object); 
-            }
-        }
-
-        // --- 4. TVORBA TVARŮ A FONTŮ ---
-        const loadedFonts = {};
         const fontLoader = new FontLoader();
-        fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_regular.typeface.json', f => loadedFonts['helvetiker'] = f);
-        fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/droid/droid_sans_regular.typeface.json', f => loadedFonts['droid'] = f);
-        fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/optimer_regular.typeface.json', f => loadedFonts['optimer'] = f);
-        fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/gentilis_regular.typeface.json', f => loadedFonts['gentilis'] = f);
+        let loadedFont = null;
+        fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json', (font) => {
+            loadedFont = font;
+            window.loadTemplate('classic'); 
+        });
 
-        function createPrimitive(geometry, typeName) {
-            const mat = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
-            const mesh = new THREE.Mesh(geometry, mat);
-            mesh.position.set(0, 5, 0); 
-            // Uložíme si zaoblení na 0
-            mesh.userData = { isText: false, type: typeName, rounding: 0 }; 
+        // --- PARAMETRY A HISTORIE (UNDO) ---
+        const params = {
+            text: "Klíčenka", width: 60, height: 20, depth: 3,
+            holeRad: 3, holeOff: 6, textSize: 10, textDepth: 2, textX: -5, textY: 0
+        };
+
+        const historyStack = [];
+
+        // Uloží kompletní stav před změnou
+        function saveState() {
+            // Udržujeme historii na max 50 krocích, ať neplníme paměť
+            if (historyStack.length > 50) historyStack.shift();
+            historyStack.push(JSON.parse(JSON.stringify(params)));
+        }
+
+        // Krok zpět
+        function undo() {
+            if (historyStack.length === 0) return;
+            const prevState = historyStack.pop();
+            Object.assign(params, prevState); // Zkopírujeme hodnoty z paměti zpět do params
+            updateUIFromParams(); // Změníme polohy posuvníků podle čísel
+            generateKeychain(); // Přegenerujeme 3D
+        }
+
+        // --- GENERÁTOR ---
+        function generateKeychain() {
+            if (!loadedFont) return;
+
+            while(keychainGroup.children.length > 0){ 
+                const child = keychainGroup.children[0];
+                child.geometry.dispose();
+                child.material.dispose();
+                keychainGroup.remove(child); 
+            }
+
+            const shape = new THREE.Shape();
+            const w2 = params.width / 2;
+            const h2 = params.height / 2;
+            const r = 4; // Pevné zaoblení 4mm
+
+            // Ochrana: aby zaoblení nerozbilo tvar u příliš tenkých štítků
+            const safeR = Math.min(r, Math.min(w2, h2));
+
+            shape.moveTo(-w2 + safeR, h2);
+            shape.lineTo(w2 - safeR, h2);
+            shape.quadraticCurveTo(w2, h2, w2, h2 - safeR);
+            shape.lineTo(w2, -h2 + safeR);
+            shape.quadraticCurveTo(w2, -h2, w2 - safeR, -h2);
+            shape.lineTo(-w2 + safeR, -h2);
+            shape.quadraticCurveTo(-w2, -h2, -w2, -h2 + safeR);
+            shape.lineTo(-w2, h2 - safeR);
+            shape.quadraticCurveTo(-w2, h2, -w2 + safeR, h2);
+
+            if (params.holeRad > 0) {
+                const holePath = new THREE.Path();
+                const holeX = w2 - params.holeOff; 
+                holePath.absarc(holeX, 0, params.holeRad, 0, Math.PI * 2, true);
+                shape.holes.push(holePath);
+            }
+
+            const extrudeSettings = { depth: params.depth, bevelEnabled: false };
+            const tagGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            tagGeom.translate(0, 0, -params.depth / 2); 
             
-            scene.add(mesh);
-            objects.push(mesh);
-            selectObject(mesh);
-            history.push({ type: 'add', object: mesh });
-        }
-
-        function createTextGeometry(text, fontId, roundingVal) {
-            const font = loadedFonts[fontId] || loadedFonts['helvetiker'];
-            const isBevel = roundingVal > 0;
-            const textGeom = new TextGeometry(text, { 
-                font: font, size: 10, height: 3, curveSegments: 6, 
-                bevelEnabled: isBevel, bevelThickness: roundingVal, bevelSize: roundingVal, bevelSegments: 3 
-            });
-            textGeom.computeBoundingBox();
-            const centerOffset = -0.5 * (textGeom.boundingBox.max.x - textGeom.boundingBox.min.x);
-            textGeom.translate(centerOffset, 0, 0); 
-            return textGeom;
-        }
-
-        function addText(textContent = "3D Tisk") {
-            if (!loadedFonts['helvetiker']) return alert("Písmo se načítá, zkus to hned znova.");
-            const textGeom = createTextGeometry(textContent, 'helvetiker', 0);
-            const textMat = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
-            const textMesh = new THREE.Mesh(textGeom, textMat);
-            textMesh.position.set(0, 5, 0);
+            const tagMat = new THREE.MeshStandardMaterial({ color: 0xff6b00, roughness: 0.4 }); 
+            const tagMesh = new THREE.Mesh(tagGeom, tagMat);
             
-            textMesh.userData = { isText: true, text: textContent, fontId: 'helvetiker', type: 'Text', rounding: 0 };
-            scene.add(textMesh);
-            objects.push(textMesh);
-            selectObject(textMesh);
-            history.push({ type: 'add', object: textMesh });
-        }
+            tagMesh.rotation.x = -Math.PI / 2;
+            keychainGroup.add(tagMesh);
 
-        // --- 5. LOGIKA PRAVÉHO PANELU ---
-        let selectedObject = null;
+            if (params.text.trim() !== '') {
+                const textGeom = new TextGeometry(params.text, {
+                    font: loadedFont, size: params.textSize, height: params.textDepth, curveSegments: 4, bevelEnabled: false
+                });
 
-        function selectObject(obj) {
-            selectedObject = obj;
-            if (obj) {
-                transformControl.attach(obj);
-                showPropertiesPanel(obj);
+                textGeom.computeBoundingBox();
+                const xOffset = -0.5 * (textGeom.boundingBox.max.x - textGeom.boundingBox.min.x);
+                const yOffset = -0.5 * (textGeom.boundingBox.max.y - textGeom.boundingBox.min.y);
                 
-                // Aktualizace zeleného obrysu
-                selectionBox.setFromObject(obj);
-                selectionBox.visible = true;
-            } else {
-                transformControl.detach();
-                hidePropertiesPanel();
-                selectionBox.visible = false; // Skryjeme obrys
+                textGeom.translate(xOffset + params.textX, yOffset + params.textY, 0);
+
+                const textMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }); 
+                const textMesh = new THREE.Mesh(textGeom, textMat);
+                
+                textMesh.position.z = params.depth / 2;
+                textMesh.rotation.x = -Math.PI / 2;
+                textMesh.position.y = params.depth / 2;
+                
+                keychainGroup.add(textMesh);
             }
         }
 
-        function showPropertiesPanel(obj) {
-            document.getElementById('properties-panel').style.display = 'block';
-            document.getElementById('prop-title').innerText = "Vlastnosti: " + obj.userData.type; 
-            document.getElementById('prop-color').value = '#' + obj.material.color.getHexString();
-
-            // Text blok
-            if (obj.userData.isText) {
-                document.getElementById('prop-text-group').style.display = 'block';
-                document.getElementById('prop-text-input').value = obj.userData.text;
-                document.getElementById('prop-font-select').value = obj.userData.fontId;
-            } else {
-                document.getElementById('prop-text-group').style.display = 'none';
-            }
-
-            // Zaoblení (jen pro Kostku a Text)
-            if (obj.userData.type === 'Kostka' || obj.userData.isText) {
-                document.getElementById('prop-rounding-group').style.display = 'block';
-                document.getElementById('prop-rounding-slider').value = obj.userData.rounding;
-                document.getElementById('prop-rounding-val').innerText = obj.userData.rounding;
-            } else {
-                document.getElementById('prop-rounding-group').style.display = 'none';
-            }
-
-            updatePropertiesPanelValues();
-        }
-
-        function hidePropertiesPanel() {
-            document.getElementById('properties-panel').style.display = 'none';
-        }
-
-        function updatePropertiesPanelValues() {
-            if (!selectedObject) return;
-            const box = new THREE.Box3().setFromObject(selectedObject);
-            const size = box.getSize(new THREE.Vector3());
-            document.getElementById('prop-size-x').value = size.x.toFixed(1);
-            document.getElementById('prop-size-y').value = size.y.toFixed(1);
-            document.getElementById('prop-size-z').value = size.z.toFixed(1);
-        }
-
-        document.getElementById('prop-color').addEventListener('input', (e) => {
-            if (selectedObject) selectedObject.material.color.set(e.target.value);
+        // --- PROPOJENÍ UI A PARAMETRŮ ---
+        const inputs = ['width', 'height', 'depth', 'holeRad', 'holeOff', 'textSize', 'textDepth', 'textX', 'textY'];
+        
+        inputs.forEach(id => {
+            const el = document.getElementById('p_' + id);
+            // Než uživatel začne tahat posuvníkem, uložíme historii
+            el.addEventListener('pointerdown', saveState);
+            
+            el.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('v_' + id).innerText = val;
+                params[id] = val; 
+                generateKeychain(); 
+            });
         });
 
-        // Úprava velikosti přes políčka
-        function handleSizeInputChange(axis, event) {
-            if (!selectedObject) return;
-            const newValue = parseFloat(event.target.value);
-            if (newValue <= 0 || isNaN(newValue)) return;
-            const box = new THREE.Box3().setFromObject(selectedObject);
-            const currentSize = box.getSize(new THREE.Vector3())[axis];
-            if (currentSize > 0) {
-                selectedObject.scale[axis] *= (newValue / currentSize);
-                selectionBox.update(); // Obnovit obrys
-            }
-        }
-        document.getElementById('prop-size-x').addEventListener('change', (e) => handleSizeInputChange('x', e));
-        document.getElementById('prop-size-y').addEventListener('change', (e) => handleSizeInputChange('y', e));
-        document.getElementById('prop-size-z').addEventListener('change', (e) => handleSizeInputChange('z', e));
-
-        // Úprava textu
-        function handleTextUpdate() {
-            if (!selectedObject || !selectedObject.userData.isText) return;
-            const newText = document.getElementById('prop-text-input').value;
-            const newFont = document.getElementById('prop-font-select').value;
-            const r = parseFloat(document.getElementById('prop-rounding-slider').value);
-            
-            selectedObject.userData.text = newText;
-            selectedObject.userData.fontId = newFont;
-            selectedObject.userData.rounding = r;
-            
-            selectedObject.geometry.dispose(); 
-            selectedObject.geometry = createTextGeometry(newText, newFont, r);
-            selectionBox.update();
-            updatePropertiesPanelValues(); 
-        }
-        document.getElementById('prop-text-input').addEventListener('input', handleTextUpdate);
-        document.getElementById('prop-font-select').addEventListener('change', handleTextUpdate);
-
-        // Úprava zaoblení (Cube & Text)
-        document.getElementById('prop-rounding-slider').addEventListener('input', (e) => {
-            if (!selectedObject) return;
-            const r = parseFloat(e.target.value);
-            document.getElementById('prop-rounding-val').innerText = r;
-            selectedObject.userData.rounding = r;
-
-            if (selectedObject.userData.type === 'Kostka') {
-                selectedObject.geometry.dispose();
-                // Pro kostku přepneme na specíalní oblou geometrii
-                if (r > 0) {
-                    selectedObject.geometry = new RoundedBoxGeometry(10, 10, 10, 4, r);
-                } else {
-                    selectedObject.geometry = new THREE.BoxGeometry(10, 10, 10);
-                }
-            } else if (selectedObject.userData.isText) {
-                handleTextUpdate(); // Text má vlastní logiku obnovy
-            }
-            selectionBox.update();
+        const textInput = document.getElementById('p_text');
+        textInput.addEventListener('focus', saveState); // Než začne psát
+        textInput.addEventListener('input', (e) => {
+            params.text = e.target.value;
+            generateKeychain();
         });
 
-        // --- 6. VÝBĚR MYŠÍ ---
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        renderer.domElement.addEventListener('pointerdown', (event) => {
-            const isClickOnUI = event.clientX < 320 || event.clientX > window.innerWidth - 320;
-            if (isClickOnUI || transformControl.dragging) return;
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            
-            const intersects = raycaster.intersectObjects(objects, true);
-            if (intersects.length > 0) {
-                let hitObject = intersects[0].object;
-                while (hitObject.parent && !objects.includes(hitObject)) hitObject = hitObject.parent;
-                if (objects.includes(hitObject)) selectObject(hitObject);
-            } else {
-                if (!transformControl.pointerIsOver) selectObject(null); 
-            }
-        });
-
+        document.getElementById('undoBtn').addEventListener('click', undo);
+        
         window.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
-            if (e.key === 'Shift') {
-                transformControl.setTranslationSnap(10); 
-                transformControl.setRotationSnap(Math.PI / 4); 
-                transformControl.setScaleSnap(0.25); 
-            }
-            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObject && document.activeElement.tagName !== "INPUT") {
-                document.getElementById('deleteBtn').click();
-            }
         });
 
-        window.addEventListener('keyup', (e) => {
-            if (e.key === 'Shift') {
-                transformControl.setTranslationSnap(null); transformControl.setRotationSnap(null); transformControl.setScaleSnap(null);
-            }
-        });
+        // --- SYSTÉM ŠABLON (Přednastavené i Vlastní) ---
+        const customTemplates = [];
 
-        // --- 7. TLAČÍTKA A EXPORT ---
-        document.getElementById('undoBtn').addEventListener('click', undo);
-        document.getElementById('addCubeBtn').addEventListener('click', () => createPrimitive(new THREE.BoxGeometry(10, 10, 10), 'Kostka'));
-        document.getElementById('addSphereBtn').addEventListener('click', () => createPrimitive(new THREE.SphereGeometry(5, 32, 32), 'Koule'));
-        document.getElementById('addCylinderBtn').addEventListener('click', () => createPrimitive(new THREE.CylinderGeometry(5, 5, 10, 32), 'Válec'));
-        document.getElementById('addConeBtn').addEventListener('click', () => createPrimitive(new THREE.ConeGeometry(5, 10, 32), 'Kužel'));
-        document.getElementById('addTorusBtn').addEventListener('click', () => createPrimitive(new THREE.TorusGeometry(4, 1.5, 16, 50), 'Prstenec'));
-        document.getElementById('addTextBtn').addEventListener('click', () => addText("3D Tisk"));
-        
-        document.getElementById('deleteBtn').addEventListener('click', () => {
-            if (selectedObject) {
-                history.push({ type: 'delete', object: selectedObject });
-                scene.remove(selectedObject);
-                objects.splice(objects.indexOf(selectedObject), 1);
-                selectObject(null);
-            }
-        });
+        window.loadTemplate = function(type) {
+            saveState(); // Uložíme krok, kdyby chtěl uživatel vzít vložení šablony zpět
 
-        const modes = { 'mode-translate': 'translate', 'mode-rotate': 'rotate', 'mode-scale': 'scale' };
-        Object.keys(modes).forEach(id => {
-            document.getElementById(id).addEventListener('click', (e) => {
-                transformControl.setMode(modes[id]);
-                Object.keys(modes).forEach(mId => document.getElementById(mId).classList.remove('active'));
-                e.target.classList.add('active');
+            if (type === 'classic') {
+                applyTemplateValues("Klíčenka", 60, 20, 3, 3, 6, 10, 2, -5, 0);
+            } else if (type === 'large') {
+                applyTemplateValues("JMENOVKA", 100, 40, 2, 0, 0, 15, 1, 0, 0); 
+            } else if (type === 'tag') {
+                applyTemplateValues("MAX", 40, 15, 2, 2.5, 4, 6, 1.5, -4, 0);
+            }
+        };
+
+        function applyTemplateValues(txt, w, h, d, hR, hO, tS, tD, tX, tY) {
+            params.text = txt; params.width = w; params.height = h; params.depth = d;
+            params.holeRad = hR; params.holeOff = hO; params.textSize = tS; params.textDepth = tD;
+            params.textX = tX; params.textY = tY;
+            
+            updateUIFromParams();
+            generateKeychain();
+            
+            camera.position.set(0, 80, 0);
+            camera.lookAt(0,0,0);
+        }
+
+        // Nastaví posuvníky v HTML na hodnoty ze současného objektu `params`
+        function updateUIFromParams() {
+            document.getElementById('p_text').value = params.text;
+            inputs.forEach(id => {
+                document.getElementById('p_' + id).value = params[id];
+                document.getElementById('v_' + id).innerText = params[id];
             });
+        }
+
+        // -- VLASTNÍ ŠABLONY --
+        document.getElementById('saveTplBtn').addEventListener('click', () => {
+            const name = prompt("Jak chceš tuto šablonu pojmenovat?", "Moje štítky");
+            if (!name) return;
+
+            customTemplates.push({
+                id: Date.now(),
+                name: name,
+                // Uložíme kopii aktuálního nastavení parametrů
+                savedParams: JSON.parse(JSON.stringify(params)) 
+            });
+            renderCustomTemplates();
         });
 
+        function renderCustomTemplates() {
+            const container = document.getElementById('custom-templates');
+            container.innerHTML = '';
+            
+            customTemplates.forEach(tpl => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-tpl-item';
+
+                const btn = document.createElement('button');
+                btn.className = 'template-btn';
+                btn.innerHTML = `★ ${tpl.name}<span>${tpl.savedParams.width}x${tpl.savedParams.height} mm</span>`;
+                btn.onclick = () => {
+                    saveState();
+                    Object.assign(params, tpl.savedParams);
+                    updateUIFromParams();
+                    generateKeychain();
+                };
+                wrapper.appendChild(btn);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'del-btn';
+                delBtn.innerText = '✖';
+                delBtn.onclick = () => {
+                    if(confirm("Smazat vlastní šablonu?")) {
+                        const index = customTemplates.indexOf(tpl);
+                        if (index > -1) customTemplates.splice(index, 1);
+                        renderCustomTemplates();
+                    }
+                };
+                wrapper.appendChild(delBtn);
+
+                container.appendChild(wrapper);
+            });
+        }
+
+        // --- EXPORT ---
         document.getElementById('exportBtn').addEventListener('click', () => {
-            if (objects.length === 0) return alert("Není co exportovat.");
-            const currentAttached = transformControl.object;
-            transformControl.detach(); 
-            const exportScene = new THREE.Scene();
-            objects.forEach(obj => exportScene.add(obj.clone()));
             const exporter = new STLExporter();
-            const result = exporter.parse(exportScene, { binary: true });
+            const result = exporter.parse(keychainGroup, { binary: true });
             const blob = new Blob([result], { type: 'application/octet-stream' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'muj_3d_model.stl';
+            link.download = 'klicenka_' + params.text + '.stl';
             link.click();
-            if (currentAttached) transformControl.attach(currentAttached);
         });
 
         window.addEventListener('resize', () => {
@@ -483,9 +422,6 @@
             renderer.render(scene, camera);
         }
         animate();
-        
-        // Úvodní kostka
-        createPrimitive(new THREE.BoxGeometry(10, 10, 10), 'Kostka');
     </script>
 </body>
 </html>
