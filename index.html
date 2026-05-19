@@ -370,8 +370,8 @@
 
         window.loadTemplate = function(type) {
             currentParametricTplId = null; // Pokud je to defaultní šablona, odpojíme vlastní ID
-            if(type === 'classic') Object.assign(params, {text:"Klíčenka", autoSize:true, padX:10, padY:6, depth:3, radius:4, hasBorder:false, holePos:'right', holeRad:3, holeOff:6, textSize:10, textDepth:2, textX:-5, textY:0});
-            if(type === 'large') Object.assign(params, {text:"JMENOVKA", autoSize:false, width:100, height:40, depth:2, radius:2, hasBorder:true, borderW:3, borderH:2, holePos:'right', holeRad:0, holeOff:0, textSize:15, textDepth:1, textX:0, textY:0});
+            if(type === 'classic') Object.assign(params, {text:"Zdenda", autoSize:true, padX:10, padY:6, depth:3, radius:4, hasBorder:false, holePos:'right', holeRad:3, holeOff:6, textSize:10, textDepth:2, textX:-5, textY:0});
+            if(type === 'large') Object.assign(params, {text:"UzChciDomu", autoSize:false, width:100, height:40, depth:2, radius:2, hasBorder:true, borderW:3, borderH:2, holePos:'right', holeRad:0, holeOff:0, textSize:15, textDepth:1, textX:0, textY:0});
             if(type === 'tag') Object.assign(params, {text:"MAX", autoSize:false, width:40, height:15, depth:2, radius:7.5, hasBorder:false, holePos:'top', holeRad:2, holeOff:3, textSize:7, textDepth:1, textX:0, textY:-2});
             syncParamUI(); generateParametric(); updateParametricTplUI();
         };
