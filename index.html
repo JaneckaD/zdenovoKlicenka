@@ -1,863 +1,887 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profi 3D Editor - Ultimátní Tisková Verze</title>
-    <style>
-        :root { --bg: #1a1a1a; --panel: #222; --border: #333; --accent: #2196F3; --text: #eee; --text-muted: #aaa; }
-        body { margin: 0; overflow: hidden; background-color: var(--bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); }
-        canvas { display: block; outline: none; }
-        
-        #sidebar { position: absolute; top: 0; left: 0; width: 70px; height: 100vh; background: #111; display: flex; flex-direction: column; align-items: center; padding-top: 15px; z-index: 300; border-right: 1px solid var(--border); }
-        .nav-icon { width: 50px; height: 50px; margin-bottom: 12px; background: #2c3e50; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #34495e; transition: 0.2s; }
-        .nav-icon:hover { background: #34495e; }
-        .nav-icon.active { background: #4CAF50; border-color: #4CAF50; box-shadow: 0 0 10px rgba(76,175,80,0.4); }
-        .nav-icon span { font-size: 20px; }
-        .nav-icon small { font-size: 9px; margin-top: 2px; color: #ddd; }
+    <!DOCTYPE html>
+    <html lang="cs">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Profi 3D Editor - Ultimátní Tisková Verze</title>
+        <style>
+            :root { --bg: #1a1a1a; --panel: #222; --border: #333; --accent: #2196F3; --text: #eee; --text-muted: #aaa; }
+            body { margin: 0; overflow: hidden; background-color: var(--bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); }
+            canvas { display: block; outline: none; }
+            
+            #sidebar { position: absolute; top: 0; left: 0; width: 70px; height: 100vh; background: #111; display: flex; flex-direction: column; align-items: center; padding-top: 15px; z-index: 300; border-right: 1px solid var(--border); }
+            .nav-icon { width: 50px; height: 50px; margin-bottom: 12px; background: #2c3e50; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #34495e; transition: 0.2s; }
+            .nav-icon:hover { background: #34495e; }
+            .nav-icon.active { background: #4CAF50; border-color: #4CAF50; box-shadow: 0 0 10px rgba(76,175,80,0.4); }
+            .nav-icon span { font-size: 20px; }
+            .nav-icon small { font-size: 9px; margin-top: 2px; color: #ddd; }
 
-        #left-drawer { position: absolute; top: 0; left: 70px; width: 280px; height: 100vh; background: rgba(30, 30, 30, 0.98); backdrop-filter: blur(10px); border-right: 1px solid var(--border); padding: 20px; box-sizing: border-box; z-index: 200; overflow-y: auto; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        #left-drawer.open { transform: translateX(0); }
-        .drawer-content { display: none; }
-        .drawer-content.active { display: block; }
+            #left-drawer { position: absolute; top: 0; left: 70px; width: 280px; height: 100vh; background: rgba(30, 30, 30, 0.98); backdrop-filter: blur(10px); border-right: 1px solid var(--border); padding: 20px; box-sizing: border-box; z-index: 200; overflow-y: auto; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+            #left-drawer.open { transform: translateX(0); }
+            .drawer-content { display: none; }
+            .drawer-content.active { display: block; }
 
-        #transform-toolbar { position: absolute; top: 15px; left: 85px; z-index: 150; background: rgba(30,30,30,0.9); padding: 6px; border-radius: 8px; border: 1px solid var(--border); display: none; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: left 0.3s; }
-        #transform-toolbar.shifted { left: 365px; }
-        .tool-icon { background: #2c3e50; border: 1px solid #34495e; color: white; width: 42px; height: 42px; border-radius: 6px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .tool-icon:hover { background: #34495e; }
-        .tool-icon.active-tool { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px rgba(33, 150, 243, 0.4); }
+            #transform-toolbar { position: absolute; top: 15px; left: 85px; z-index: 150; background: rgba(30,30,30,0.9); padding: 6px; border-radius: 8px; border: 1px solid var(--border); display: none; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: left 0.3s; }
+            #transform-toolbar.shifted { left: 365px; }
+            .tool-icon { background: #2c3e50; border: 1px solid #34495e; color: white; width: 42px; height: 42px; border-radius: 6px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+            .tool-icon:hover { background: #34495e; }
+            .tool-icon.active-tool { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px rgba(33, 150, 243, 0.4); }
 
-        #right-panel { position: absolute; top: 15px; right: 15px; width: 360px; max-height: 95vh; background: rgba(25, 25, 25, 0.98); backdrop-filter: blur(10px); padding: 20px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid var(--border); box-sizing: border-box; overflow-y: auto; display: none; z-index: 100; }
+            #right-panel { position: absolute; top: 15px; right: 15px; width: 360px; max-height: 95vh; background: rgba(25, 25, 25, 0.98); backdrop-filter: blur(10px); padding: 20px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid var(--border); box-sizing: border-box; overflow-y: auto; display: none; z-index: 100; }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-        
-        h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; color: #4CAF50; border-bottom: 2px solid #333; padding-bottom: 8px;}
-        
-        .settings-block { background: #222; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
-        .block-title { font-size: 11px; color: var(--accent); text-transform: uppercase; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
-        .block-title::after { content: ''; flex: 1; height: 1px; background: #333; }
+            ::-webkit-scrollbar { width: 6px; }
+            ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+            
+            h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; color: #4CAF50; border-bottom: 2px solid #333; padding-bottom: 8px;}
+            
+            .settings-block { background: #222; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+            .block-title { font-size: 11px; color: var(--accent); text-transform: uppercase; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
+            .block-title::after { content: ''; flex: 1; height: 1px; background: #333; }
 
-        button.action-btn { width: 100%; padding: 12px; margin-bottom: 8px; cursor: pointer; background: #3a3a3a; color: #fff; border: 1px solid #444; border-radius: 6px; font-weight: bold; transition: 0.2s; letter-spacing: 0.5px;}
-        button.action-btn:hover:not(:disabled) { background: #4a4a4a; border-color: #555; }
-        button.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+            button.action-btn { width: 100%; padding: 12px; margin-bottom: 8px; cursor: pointer; background: #3a3a3a; color: #fff; border: 1px solid #444; border-radius: 6px; font-weight: bold; transition: 0.2s; letter-spacing: 0.5px;}
+            button.action-btn:hover:not(:disabled) { background: #4a4a4a; border-color: #555; }
+            button.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .template-btn { background: #2c3e50; border: 1px solid #34495e; text-align: left; padding: 12px; width: 100%; color: white; border-radius: 6px; cursor: pointer; margin-bottom: 8px; transition: 0.2s; font-weight: bold;}
-        .template-btn:hover { background: #34495e; border-color: var(--accent);}
-        
-        .custom-tpl-item { display: flex; gap: 5px; margin-bottom: 8px;}
-        .custom-tpl-item .template-btn { flex-grow: 1; margin-bottom: 0; padding: 10px 12px; font-weight: bold; }
-        .custom-tpl-item .del-btn { width: 40px; background: #d32f2f; margin-bottom: 0; border:none; color:white; border-radius: 6px; cursor:pointer;}
-        .custom-tpl-item .del-btn:hover { background: #b71c1c; }
+            .template-btn { background: #2c3e50; border: 1px solid #34495e; text-align: left; padding: 12px; width: 100%; color: white; border-radius: 6px; cursor: pointer; margin-bottom: 8px; transition: 0.2s; font-weight: bold;}
+            .template-btn:hover { background: #34495e; border-color: var(--accent);}
+            
+            .custom-tpl-item { display: flex; gap: 5px; margin-bottom: 8px;}
+            .custom-tpl-item .template-btn { flex-grow: 1; margin-bottom: 0; padding: 10px 12px; font-weight: bold; }
+            .custom-tpl-item .del-btn { width: 40px; background: #d32f2f; margin-bottom: 0; border:none; color:white; border-radius: 6px; cursor:pointer;}
+            .custom-tpl-item .del-btn:hover { background: #b71c1c; }
 
-        .param-container { margin-bottom: 15px; }
-        .param-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; align-items: center; font-weight: 500;}
-        .param-header span { color: var(--accent); font-weight: bold; background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #333;}
-        
-        input[type="range"] { width: 100%; margin: 0; appearance: none; background: #111; height: 6px; border-radius: 3px; outline: none; border: 1px solid #333; }
-        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.5); transition: 0.1s;}
-        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-        
-        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; box-sizing: border-box; background: #111; border: 1px solid #444; border-radius: 6px; color: white; margin-bottom: 5px; font-family: inherit; font-size: 13px;}
-        input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); }
-        
-        .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .color-row label { font-size: 12px; color: var(--text-muted); flex: 1; font-weight: 500;}
-        input[type="color"] { width: 50px; height: 32px; padding: 0; background: none; border: 1px solid #444; border-radius: 6px; cursor: pointer; }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
-        input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: none; }
-        
-        .checkbox-group { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 12px; background: #1a1a1a; padding: 10px; border-radius: 6px; border: 1px solid #333; cursor: pointer; transition: 0.2s;}
-        .checkbox-group:hover { border-color: #555; }
-        .checkbox-group input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); margin: 0; }
-        .checkbox-group label { cursor: pointer; flex: 1; font-weight: 500; color: #ddd;}
+            .param-container { margin-bottom: 15px; }
+            .param-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; align-items: center; font-weight: 500;}
+            .param-header span { color: var(--accent); font-weight: bold; background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #333;}
+            
+            input[type="range"] { width: 100%; margin: 0; appearance: none; background: #111; height: 6px; border-radius: 3px; outline: none; border: 1px solid #333; }
+            input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.5); transition: 0.1s;}
+            input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+            
+            input[type="text"], input[type="number"], select { width: 100%; padding: 10px; box-sizing: border-box; background: #111; border: 1px solid #444; border-radius: 6px; color: white; margin-bottom: 5px; font-family: inherit; font-size: 13px;}
+            input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); }
+            
+            .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+            .color-row label { font-size: 12px; color: var(--text-muted); flex: 1; font-weight: 500;}
+            input[type="color"] { width: 50px; height: 32px; padding: 0; background: none; border: 1px solid #444; border-radius: 6px; cursor: pointer; }
+            input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+            input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: none; }
+            
+            .checkbox-group { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 12px; background: #1a1a1a; padding: 10px; border-radius: 6px; border: 1px solid #333; cursor: pointer; transition: 0.2s;}
+            .checkbox-group:hover { border-color: #555; }
+            .checkbox-group input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); margin: 0; }
+            .checkbox-group label { cursor: pointer; flex: 1; font-weight: 500; color: #ddd;}
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
-        .grid-2 button { margin-bottom: 0; font-size: 12px; padding: 10px; }
-    </style>
-    
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-                "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.3/build/index.module.js",
-                "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.16/build/index.module.js"
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
+            .grid-2 button { margin-bottom: 0; font-size: 12px; padding: 10px; }
+        </style>
+        
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                    "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.3/build/index.module.js",
+                    "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.16/build/index.module.js"
+                }
             }
-        }
-    </script>
-</head>
-<body>
-    
-    <div id="sidebar">
-        <div class="nav-icon" id="tab-templates" onclick="toggleDrawer('templates')" title="Šablony a Generátor"><span>📁</span><small>Šablony</small></div>
-        <div class="nav-icon" id="tab-editor" onclick="toggleDrawer('editor')" title="Volný Editor"><span>🛠️</span><small>Editor</small></div>
-        <div class="nav-icon" id="tab-settings" onclick="toggleDrawer('settings')" title="Export"><span>⬇️</span><small>Export</small></div>
-    </div>
-
-    <div id="transform-toolbar">
-        <button class="tool-icon active-tool" id="mode-translate" title="Posun (T)">✥</button>
-        <button class="tool-icon" id="mode-rotate" title="Rotace (R)">↻</button>
-        <button class="tool-icon" id="mode-scale" title="Velikost (S)">⤢</button>
-    </div>
-
-    <div id="left-drawer">
-        <div id="content-templates" class="drawer-content">
-            <h3>Přednastavené</h3>
-            <!-- Tlačítka se generují dynamicky podle aktuálního textu šablony -->
-            <div id="default-templates-list"></div>
-            
-            <h3 style="margin-top: 30px; color:var(--accent);">Moje Šablony</h3>
-            <div id="custom-templates-list"></div>
-        </div>
-
-        <div id="content-editor" class="drawer-content">
-            <h3>Volný Editor</h3>
-            <button class="action-btn" id="undoBtn" style="background: #ff9800; color:#fff; border-color:#e65100;">↩ Krok zpět (Ctrl+Z)</button>
-            <button class="action-btn" onclick="clearScene()" style="background: transparent; color:#ff5252; border-color:#ff5252; margin-bottom: 25px;">🗑 Vysypat celou scénu</button>
-            
-            <div class="block-title">Vložit Tvar na podložku</div>
-            <div class="grid-2">
-                <button class="action-btn" id="addCubeBtn">Kostka</button>
-                <button class="action-btn" id="addSphereBtn">Koule</button>
-                <button class="action-btn" id="addCylinderBtn">Válec</button>
-                <button class="action-btn" id="addConeBtn">Kužel</button>
-                <button class="action-btn" id="addTorusBtn" style="grid-column: span 2;">Prstenec</button>
-            </div>
-            <button class="action-btn" id="addTextBtn" style="background:#2c3e50; border-color:#34495e; margin-top:5px;">+ Vložit 3D Text</button>
-        </div>
-
-        <div id="content-settings" class="drawer-content">
-            <h3>Tisk a Export</h3>
-            <p style="font-size:12px; color:#aaa; line-height:1.5; margin-bottom:20px;">
-                Modely jsou generovány tak, že spodní plocha leží přesně na ose Z=0. Po exportu jsou 100% připravené pro PrusaSlicer, Cura atd.
-            </p>
-            <button class="action-btn" id="btn-export" style="background: var(--accent); color: white; font-size:16px; padding: 15px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4); border:none;">⬇ Stáhnout STL model</button>
-        </div>
-    </div>
-
-    <div id="right-panel">
+        </script>
+    </head>
+    <body>
         
-        <div id="props-parametric" style="display:none;">
-            <h3 style="color:var(--accent)">Nastavení Šablony</h3>
-            
-            <div class="settings-block" style="border-color:#4CAF50;">
-                <div class="block-title" style="color:#4CAF50;">Obsah a úprava textu</div>
-                <input type="text" id="p_text" value="Text" placeholder="Napište text...">
+        <div id="sidebar">
+            <div class="nav-icon" id="tab-templates" onclick="toggleDrawer('templates')" title="Šablony a Generátor"><span>📁</span><small>Šablony</small></div>
+            <div class="nav-icon" id="tab-editor" onclick="toggleDrawer('editor')" title="Volný Editor"><span>🛠️</span><small>Editor</small></div>
+            <div class="nav-icon" id="tab-settings" onclick="toggleDrawer('settings')" title="Export"><span>⬇️</span><small>Export</small></div>
+        </div>
+
+        <div id="transform-toolbar">
+            <button class="tool-icon active-tool" id="mode-translate" title="Posun (T)">✥</button>
+            <button class="tool-icon" id="mode-rotate" title="Rotace (R)">↻</button>
+            <button class="tool-icon" id="mode-scale" title="Velikost (S)">⤢</button>
+        </div>
+
+        <div id="left-drawer">
+            <div id="content-templates" class="drawer-content">
+                <h3>Přednastavené</h3>
+                <!-- Tlačítka se generují dynamicky podle aktuálního textu šablony -->
+                <div id="default-templates-list"></div>
                 
-                <!-- POUZE FONTY S PODPOROU ČESKÝCH ZNAKŮ -->
-                <select id="p_font" style="margin-bottom:15px; background:#1a1a1a;">
-                    <option value="droid_sans_bold">Droid Sans Bold</option>
-                    <option value="droid_sans_regular">Droid Sans Regular</option>
-                    <option value="droid_serif_bold">Droid Serif Bold</option>
-                    <option value="droid_serif_regular">Droid Serif Regular</option>
-                </select>
+                <h3 style="margin-top: 30px; color:var(--accent);">Moje Šablony</h3>
+                <div id="custom-templates-list"></div>
+            </div>
 
-                <div class="param-container"><div class="param-header"><label>Velikost písma:</label><span id="v_textSize">10</span></div><input type="range" id="p_textSize" min="3" max="60" value="10"></div>
-                <div class="param-container"><div class="param-header"><label>Vystouplost do výšky:</label><span id="v_textDepth">2</span></div><input type="range" id="p_textDepth" min="0.5" max="15" step="0.5" value="2"></div>
-                <div class="param-container"><div class="param-header"><label>Rozestup písmen:</label><span id="v_letterSpacing">0</span></div><input type="range" id="p_letterSpacing" min="-3" max="10" step="0.5" value="0"></div>
+            <div id="content-editor" class="drawer-content">
+                <h3>Volný Editor</h3>
+                <button class="action-btn" id="undoBtn" style="background: #ff9800; color:#fff; border-color:#e65100;">↩ Krok zpět (Ctrl+Z)</button>
+                <button class="action-btn" onclick="clearScene()" style="background: transparent; color:#ff5252; border-color:#ff5252; margin-bottom: 25px;">🗑 Vysypat celou scénu</button>
                 
-                <label class="checkbox-group"><input type="checkbox" id="c_centerText" checked><span>Automaticky vycentrovat text</span></label>
-                <div id="text-pos-group" style="display:none;">
-                    <div class="param-container"><div class="param-header"><label>Posun zleva (X):</label><span id="v_textX">0</span></div><input type="range" id="p_textX" min="-80" max="80" step="1" value="0"></div>
-                    <div class="param-container"><div class="param-header"><label>Posun zdola (Y):</label><span id="v_textY">0</span></div><input type="range" id="p_textY" min="-80" max="80" step="1" value="0"></div>
+                <div class="block-title">Vložit Tvar na podložku</div>
+                <div class="grid-2">
+                    <button class="action-btn" id="addCubeBtn">Kostka</button>
+                    <button class="action-btn" id="addSphereBtn">Koule</button>
+                    <button class="action-btn" id="addCylinderBtn">Válec</button>
+                    <button class="action-btn" id="addConeBtn">Kužel</button>
+                    <button class="action-btn" id="addTorusBtn" style="grid-column: span 2;">Prstenec</button>
                 </div>
-
-                <label class="checkbox-group" style="margin-bottom:0;"><input type="checkbox" id="c_bevelText"><span>Srazit hrany textu (Bevel)</span></label>
-            </div>
-            
-            <div class="settings-block">
-                <div class="block-title">Základní podložka</div>
-                <select id="s_shapeType" style="margin-bottom:12px;">
-                    <option value="rect">Tvar: Obdélník / DogTag</option>
-                    <option value="hexagon">Tvar: Šestiúhelník</option>
-                    <option value="circle">Tvar: Kruh / Mince</option>
-                </select>
-
-                <label class="checkbox-group" style="border-color:var(--accent);"><input type="checkbox" id="c_autoSize" checked><span style="color:white; font-weight:bold;">Přizpůsobit velikost textu</span></label>
-                
-                <div id="manual-size-group" style="display:none;">
-                    <div class="param-container"><div class="param-header"><label>Pevná Šířka (mm):</label><span id="v_width">60</span></div><input type="range" id="p_width" min="15" max="200" value="60"></div>
-                    <div class="param-container"><div class="param-header"><label>Pevná Výška (mm):</label><span id="v_height">20</span></div><input type="range" id="p_height" min="15" max="150" value="20"></div>
-                </div>
-
-                <div id="pad-settings" style="background:#1a1a1a; padding:10px 10px 1px 10px; border-radius:6px; margin-bottom:15px; border:1px solid #333;">
-                    <div class="param-container"><div class="param-header"><label>Okraje vlevo/vpravo:</label><span id="v_padX">10</span></div><input type="range" id="p_padX" min="2" max="50" value="10"></div>
-                    <div class="param-container"><div class="param-header"><label>Okraje nahoře/dole:</label><span id="v_padY">6</span></div><input type="range" id="p_padY" min="2" max="50" value="6"></div>
-                </div>
-
-                <div class="param-container"><div class="param-header"><label>Tloušťka podložky (Z):</label><span id="v_depth">3</span></div><input type="range" id="p_depth" min="0.5" max="15" step="0.5" value="3"></div>
-                <div id="group-radius" class="param-container"><div class="param-header"><label>Zaoblení rohů (Rádius):</label><span id="v_radius">4</span></div><input type="range" id="p_radius" min="0" max="50" step="0.5" value="4"></div>
+                <button class="action-btn" id="addTextBtn" style="background:#2c3e50; border-color:#34495e; margin-top:5px;">+ Vložit 3D Text</button>
             </div>
 
-            <div class="settings-block">
-                <div class="block-title">Ohraničení (Rámeček)</div>
-                <label class="checkbox-group"><input type="checkbox" id="c_hasBorder"><span>Přidat vystouplý okraj</span></label>
-                <div id="border-settings" style="display:none; background:#1a1a1a; padding:10px 10px 1px 10px; border-radius:6px; border:1px solid #333;">
-                    <div class="param-container"><div class="param-header"><label>Tloušťka hrany:</label><span id="v_borderW">2</span></div><input type="range" id="p_borderW" min="0.5" max="10" step="0.5" value="2"></div>
-                    <div class="param-container"><div class="param-header"><label>Výška nad podložku:</label><span id="v_borderH">1.5</span></div><input type="range" id="p_borderH" min="0.5" max="10" step="0.5" value="1.5"></div>
-                </div>
-            </div>
-
-            <div class="settings-block">
-                <div class="block-title">Otvor pro kroužek</div>
-                <label class="checkbox-group"><input type="checkbox" id="c_hasHole" checked><span>Vyvrtat dírku (naskrz)</span></label>
-                <div id="hole-settings">
-                    <select id="s_holePos" style="margin-bottom:15px; background:#1a1a1a;">
-                        <option value="right">Umístění: Vpravo</option><option value="left">Umístění: Vlevo</option><option value="top">Umístění: Nahoře</option><option value="bottom">Umístění: Dole</option>
-                    </select>
-                    <div class="param-container"><div class="param-header"><label>Průměr otvoru (mm):</label><span id="v_holeRad">3</span></div><input type="range" id="p_holeRad" min="1" max="15" step="0.5" value="3"></div>
-                    <div class="param-container"><div class="param-header"><label>Vzdálenost od kraje:</label><span id="v_holeOff">8</span></div><input type="range" id="p_holeOff" min="3" max="25" value="8"></div>
-                </div>
-            </div>
-
-            <div class="settings-block">
-                <div class="block-title">Barvy pro vizualizaci</div>
-                <div class="color-row"><label>Podložka:</label><input type="color" id="p_plateColor" value="#2c3e50"></div>
-                <div class="color-row"><label>Rámeček:</label><input type="color" id="p_borderColor" value="#34495e"></div>
-                <div class="color-row"><label>Text:</label><input type="color" id="p_textColor" value="#ffffff"></div>
-            </div>
-
-            <div class="settings-block" style="border-color: var(--accent); background:rgba(33, 150, 243, 0.05);">
-                <div class="block-title" style="color: var(--accent);">Správa Šablon</div>
-                <button class="action-btn" id="saveParamTplBtn" style="background:#1976d2; border-color:#1565C0;">+ Uložit jako vlastní šablonu</button>
-                <button class="action-btn" id="updateParamTplBtn" style="background:#00897b; border-color:#00695c;" disabled>🔄 Přepsat aktuální šablonu</button>
-                <div id="param-tpl-status-text" style="font-size:10px; color:#aaa; margin-top:5px; text-align:center;">Upravuješ výchozí šablonu</div>
+            <div id="content-settings" class="drawer-content">
+                <h3>Tisk a Export</h3>
+                <p style="font-size:12px; color:#aaa; line-height:1.5; margin-bottom:20px;">
+                    Modely jsou generovány tak, že spodní plocha leží přesně na ose Z=0. Po exportu jsou 100% připravené pro PrusaSlicer, Cura atd.
+                </p>
+                <button class="action-btn" id="btn-export" style="background: var(--accent); color: white; font-size:16px; padding: 15px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4); border:none;">⬇ Stáhnout STL model</button>
             </div>
         </div>
 
-        <div id="props-freeform" style="display:none;">
-            <h3 id="prop-title" style="color: #9b59b6; text-align:center;">Vlastnosti Objektu</h3>
+        <div id="right-panel">
             
-            <div class="settings-block">
-                <div class="block-title">Fyzické Rozměry (mm)</div>
-                <div style="display:flex; gap:10px;">
-                    <div><label style="font-size:11px; color:#aaa;">Šířka (X)</label><input type="number" id="prop-size-x" step="1"></div>
-                    <div><label style="font-size:11px; color:#aaa;">Výška (Y)</label><input type="number" id="prop-size-y" step="1"></div>
-                    <div><label style="font-size:11px; color:#aaa;">Hloubka (Z)</label><input type="number" id="prop-size-z" step="1"></div>
-                </div>
-            </div>
+            <div id="props-parametric" style="display:none;">
+                <h3 style="color:var(--accent)">Nastavení Šablony</h3>
+                
+                <div class="settings-block" style="border-color:#4CAF50;">
+                    <div class="block-title" style="color:#4CAF50;">Obsah a úprava textu</div>
+                    <input type="text" id="p_text" value="Text" placeholder="Napište text...">
+                    
+                    <!-- POUZE FONTY S PODPOROU ČESKÝCH ZNAKŮ -->
+                    <select id="p_font" style="margin-bottom:15px; background:#1a1a1a;">
+                        <option value="droid_sans_bold">Droid Sans Bold</option>
+                        <option value="droid_sans_regular">Droid Sans Regular</option>
+                        <option value="droid_serif_bold">Droid Serif Bold</option>
+                        <option value="droid_serif_regular">Droid Serif Regular</option>
+                    </select>
 
-            <div class="settings-block" id="block-special" style="display:none;">
-                <div class="block-title" id="special-title">Specifické nastavení tvaru</div>
-                <div id="prop-text-group" style="display:none; margin-bottom:15px;">
-                    <label style="font-size:11px; color:#aaa; display:block; margin-bottom:5px;">Nápis:</label>
-                    <input type="text" id="prop-text-input" style="font-size:14px; font-weight:bold;">
+                    <div class="param-container"><div class="param-header"><label>Velikost písma:</label><span id="v_textSize">10</span></div><input type="range" id="p_textSize" min="3" max="60" value="10"></div>
+                    <div class="param-container"><div class="param-header"><label>Vystouplost do výšky:</label><span id="v_textDepth">2</span></div><input type="range" id="p_textDepth" min="0.5" max="15" step="0.5" value="2"></div>
+                    <div class="param-container"><div class="param-header"><label>Rozestup písmen:</label><span id="v_letterSpacing">0</span></div><input type="range" id="p_letterSpacing" min="-3" max="10" step="0.5" value="0"></div>
+                    
+                    <label class="checkbox-group"><input type="checkbox" id="c_centerText" checked><span>Automaticky vycentrovat text</span></label>
+                    <div id="text-pos-group" style="display:none;">
+                        <div class="param-container"><div class="param-header"><label>Posun zleva (X):</label><span id="v_textX">0</span></div><input type="range" id="p_textX" min="-80" max="80" step="1" value="0"></div>
+                        <div class="param-container"><div class="param-header"><label>Posun zdola (Y):</label><span id="v_textY">0</span></div><input type="range" id="p_textY" min="-80" max="80" step="1" value="0"></div>
+                    </div>
+
+                    <label class="checkbox-group" style="margin-bottom:0;"><input type="checkbox" id="c_bevelText"><span>Srazit hrany textu (Bevel)</span></label>
                 </div>
-                <div id="prop-rounding-group" style="display:none;">
-                    <div class="param-container" style="margin-bottom:0;">
-                        <div class="param-header"><label>Zaoblení hran:</label><span id="prop-rounding-val">0</span></div>
-                        <input type="range" id="prop-rounding-slider" min="0" max="5" step="0.1" value="0">
+                
+                <div class="settings-block">
+                    <div class="block-title">Základní podložka</div>
+                    <select id="s_shapeType" style="margin-bottom:12px;">
+                        <option value="rect">Tvar: Obdélník / DogTag</option>
+                        <option value="hexagon">Tvar: Šestiúhelník</option>
+                        <option value="circle">Tvar: Kruh / Mince</option>
+                    </select>
+
+                    <label class="checkbox-group" style="border-color:var(--accent);"><input type="checkbox" id="c_autoSize" checked><span style="color:white; font-weight:bold;">Přizpůsobit velikost textu</span></label>
+                    
+                    <div id="manual-size-group" style="display:none;">
+                        <div class="param-container"><div class="param-header"><label>Pevná Šířka (mm):</label><span id="v_width">60</span></div><input type="range" id="p_width" min="15" max="200" value="60"></div>
+                        <div class="param-container"><div class="param-header"><label>Pevná Výška (mm):</label><span id="v_height">20</span></div><input type="range" id="p_height" min="15" max="150" value="20"></div>
+                    </div>
+
+                    <div id="pad-settings" style="background:#1a1a1a; padding:10px 10px 1px 10px; border-radius:6px; margin-bottom:15px; border:1px solid #333;">
+                        <div class="param-container"><div class="param-header"><label>Okraje vlevo/vpravo:</label><span id="v_padX">10</span></div><input type="range" id="p_padX" min="2" max="50" value="10"></div>
+                        <div class="param-container"><div class="param-header"><label>Okraje nahoře/dole:</label><span id="v_padY">6</span></div><input type="range" id="p_padY" min="2" max="50" value="6"></div>
+                    </div>
+
+                    <div class="param-container"><div class="param-header"><label>Tloušťka podložky (Z):</label><span id="v_depth">3</span></div><input type="range" id="p_depth" min="0.5" max="15" step="0.5" value="3"></div>
+                    <div id="group-radius" class="param-container"><div class="param-header"><label>Zaoblení rohů (Rádius):</label><span id="v_radius">4</span></div><input type="range" id="p_radius" min="0" max="50" step="0.5" value="4"></div>
+                </div>
+
+                <div class="settings-block">
+                    <div class="block-title">Ohraničení (Rámeček)</div>
+                    <label class="checkbox-group"><input type="checkbox" id="c_hasBorder"><span>Přidat vystouplý okraj</span></label>
+                    <div id="border-settings" style="display:none; background:#1a1a1a; padding:10px 10px 1px 10px; border-radius:6px; border:1px solid #333;">
+                        <div class="param-container"><div class="param-header"><label>Tloušťka hrany:</label><span id="v_borderW">2</span></div><input type="range" id="p_borderW" min="0.5" max="10" step="0.5" value="2"></div>
+                        <div class="param-container"><div class="param-header"><label>Výška nad podložku:</label><span id="v_borderH">1.5</span></div><input type="range" id="p_borderH" min="0.5" max="10" step="0.5" value="1.5"></div>
                     </div>
                 </div>
+
+                <div class="settings-block">
+                    <div class="block-title">Otvor pro kroužek</div>
+                    <label class="checkbox-group"><input type="checkbox" id="c_hasHole" checked><span>Vyvrtat dírku (naskrz)</span></label>
+                    <div id="hole-settings">
+                        <select id="s_holePos" style="margin-bottom:15px; background:#1a1a1a;">
+                            <option value="right">Umístění: Vpravo</option><option value="left">Umístění: Vlevo</option><option value="top">Umístění: Nahoře</option><option value="bottom">Umístění: Dole</option>
+                        </select>
+                        <div class="param-container"><div class="param-header"><label>Průměr otvoru (mm):</label><span id="v_holeRad">3</span></div><input type="range" id="p_holeRad" min="1" max="15" step="0.5" value="3"></div>
+                        <div class="param-container"><div class="param-header"><label>Vzdálenost od kraje:</label><span id="v_holeOff">8</span></div><input type="range" id="p_holeOff" min="3" max="25" value="8"></div>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <div class="block-title">Barvy pro vizualizaci</div>
+                    <div class="color-row"><label>Podložka:</label><input type="color" id="p_plateColor" value="#2c3e50"></div>
+                    <div class="color-row"><label>Rámeček:</label><input type="color" id="p_borderColor" value="#34495e"></div>
+                    <div class="color-row"><label>Text:</label><input type="color" id="p_textColor" value="#ffffff"></div>
+                </div>
+
+                <div class="settings-block" style="border-color: var(--accent); background:rgba(33, 150, 243, 0.05);">
+                    <div class="block-title" style="color: var(--accent);">Správa Šablon</div>
+                    <button class="action-btn" id="saveParamTplBtn" style="background:#1976d2; border-color:#1565C0;">+ Uložit jako vlastní šablonu</button>
+                    <button class="action-btn" id="updateParamTplBtn" style="background:#00897b; border-color:#00695c;" disabled>🔄 Přepsat aktuální šablonu</button>
+                    <div id="param-tpl-status-text" style="font-size:10px; color:#aaa; margin-top:5px; text-align:center;">Upravuješ výchozí šablonu</div>
+                </div>
             </div>
 
-            <div class="settings-block">
-                <div class="block-title">Materiál</div>
-                <div class="color-row"><label>Barva objektu:</label><input type="color" id="prop-color"></div>
-                <label class="checkbox-group"><input type="checkbox" id="c_wireframe"><span>Zobrazit jen síť (Wireframe)</span></label>
-                <div class="param-container"><div class="param-header"><label>Kovový lesk:</label><span id="v_metal">0</span></div><input type="range" id="p_metal" min="0" max="1" step="0.05" value="0"></div>
-                <div class="param-container"><div class="param-header"><label>Hrubost povrchu:</label><span id="v_rough">0.5</span></div><input type="range" id="p_rough" min="0" max="1" step="0.05" value="0.5"></div>
+            <div id="props-freeform" style="display:none;">
+                <h3 id="prop-title" style="color: #9b59b6; text-align:center;">Vlastnosti Objektu</h3>
+                
+                <div class="settings-block">
+                    <div class="block-title">Fyzické Rozměry (mm)</div>
+                    <div style="display:flex; gap:10px;">
+                        <div><label style="font-size:11px; color:#aaa;">Šířka (X)</label><input type="number" id="prop-size-x" step="1"></div>
+                        <div><label style="font-size:11px; color:#aaa;">Výška (Y)</label><input type="number" id="prop-size-y" step="1"></div>
+                        <div><label style="font-size:11px; color:#aaa;">Hloubka (Z)</label><input type="number" id="prop-size-z" step="1"></div>
+                    </div>
+                </div>
+
+                <div class="settings-block" id="block-special" style="display:none;">
+                    <div class="block-title" id="special-title">Specifické nastavení tvaru</div>
+                    <div id="prop-text-group" style="display:none; margin-bottom:15px;">
+                        <label style="font-size:11px; color:#aaa; display:block; margin-bottom:5px;">Nápis:</label>
+                        <input type="text" id="prop-text-input" style="font-size:14px; font-weight:bold;">
+                    </div>
+                    <div id="prop-rounding-group" style="display:none;">
+                        <div class="param-container" style="margin-bottom:0;">
+                            <div class="param-header"><label>Zaoblení hran:</label><span id="prop-rounding-val">0</span></div>
+                            <input type="range" id="prop-rounding-slider" min="0" max="5" step="0.1" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <div class="block-title">Materiál</div>
+                    <div class="color-row"><label>Barva objektu:</label><input type="color" id="prop-color"></div>
+                    <label class="checkbox-group"><input type="checkbox" id="c_wireframe"><span>Zobrazit jen síť (Wireframe)</span></label>
+                    <div class="param-container"><div class="param-header"><label>Kovový lesk:</label><span id="v_metal">0</span></div><input type="range" id="p_metal" min="0" max="1" step="0.05" value="0"></div>
+                    <div class="param-container"><div class="param-header"><label>Hrubost povrchu:</label><span id="v_rough">0.5</span></div><input type="range" id="p_rough" min="0" max="1" step="0.05" value="0.5"></div>
+                </div>
+
+                <div class="settings-block" id="block-templates" style="border-color: #2196F3; display:none;">
+                    <div class="block-title" style="color: #2196F3;">Uložení Tvaru</div>
+                    <button class="action-btn" id="saveCustomTplBtn" style="background:#1976d2; border-color:#1565C0;">+ Uložit jako podložku</button>
+                    <button class="action-btn" id="updateCustomTplBtn" style="background:#00897b; border-color:#00695c;" disabled>🔄 Přepsat uloženou podložku</button>
+                    <div id="tpl-status-text" style="font-size:10px; color:#aaa; margin-top:5px; text-align:center;">Objekt není uložen</div>
+                </div>
+                
+                <button class="action-btn" id="deleteBtn" style="background:transparent; color:#ff5252; border-color:#ff5252; margin-top:10px;">🗑 Smazat tento objekt</button>
             </div>
 
-            <div class="settings-block" id="block-templates" style="border-color: #2196F3; display:none;">
-                <div class="block-title" style="color: #2196F3;">Uložení Tvaru</div>
-                <button class="action-btn" id="saveCustomTplBtn" style="background:#1976d2; border-color:#1565C0;">+ Uložit jako podložku</button>
-                <button class="action-btn" id="updateCustomTplBtn" style="background:#00897b; border-color:#00695c;" disabled>🔄 Přepsat uloženou podložku</button>
-                <div id="tpl-status-text" style="font-size:10px; color:#aaa; margin-top:5px; text-align:center;">Objekt není uložen</div>
-            </div>
-            
-            <button class="action-btn" id="deleteBtn" style="background:transparent; color:#ff5252; border-color:#ff5252; margin-top:10px;">🗑 Smazat tento objekt</button>
         </div>
 
-    </div>
+        <script type="module">
+            import * as THREE from 'three';
+            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+            import { TransformControls } from 'three/addons/controls/TransformControls.js';
+            import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+            import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+            import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+            import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+            import { Evaluator, Brush, SUBTRACTION, ADDITION } from 'three-bvh-csg';
+            
+            // --- ZÁKLAD SCÉNY ---
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 70, 120); 
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+            document.body.appendChild(renderer.domElement);
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { TransformControls } from 'three/addons/controls/TransformControls.js';
-        import { STLExporter } from 'three/addons/exporters/STLExporter.js';
-        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-        import { Evaluator, Brush, SUBTRACTION, ADDITION } from 'three-bvh-csg';
-        
-        // --- ZÁKLAD SCÉNY ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.set(0, 70, 120); 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight); 
-        document.body.appendChild(renderer.domElement);
+            scene.add(new THREE.AmbientLight(0x666666));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(50, 100, 80); scene.add(dirLight);
+            const rimLight = new THREE.DirectionalLight(0xaabbff, 0.5); rimLight.position.set(-50, 20, -100); scene.add(rimLight);
+            scene.add(new THREE.GridHelper(300, 30, 0x444444, 0x222222));
 
-        scene.add(new THREE.AmbientLight(0x666666));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(50, 100, 80); scene.add(dirLight);
-        const rimLight = new THREE.DirectionalLight(0xaabbff, 0.5); rimLight.position.set(-50, 20, -100); scene.add(rimLight);
-        scene.add(new THREE.GridHelper(300, 30, 0x444444, 0x222222));
+            const orbitControls = new OrbitControls(camera, renderer.domElement); 
+            orbitControls.enableDamping = true; orbitControls.dampingFactor = 0.05;
 
-        const orbitControls = new OrbitControls(camera, renderer.domElement); 
-        orbitControls.enableDamping = true; orbitControls.dampingFactor = 0.05;
+            const parametricGroup = new THREE.Group(); const freeformGroup = new THREE.Group();
+            scene.add(parametricGroup); scene.add(freeformGroup);
 
-        const parametricGroup = new THREE.Group(); const freeformGroup = new THREE.Group();
-        scene.add(parametricGroup); scene.add(freeformGroup);
+            const transformControl = new TransformControls(camera, renderer.domElement);
+            transformControl.setSize(1.2); scene.add(transformControl);
 
-        const transformControl = new TransformControls(camera, renderer.domElement);
-        transformControl.setSize(1.2); scene.add(transformControl);
+            const selectionBox = new THREE.BoxHelper(undefined, 0x2196F3); 
+            selectionBox.visible = false; selectionBox.material.depthTest = false; scene.add(selectionBox);
 
-        const selectionBox = new THREE.BoxHelper(undefined, 0x2196F3); 
-        selectionBox.visible = false; selectionBox.material.depthTest = false; scene.add(selectionBox);
+            let currentMode = ''; const freeObjects = []; const freeHistory = []; 
+            const csgEvaluator = new Evaluator();
 
-        let currentMode = ''; const freeObjects = []; const freeHistory = []; 
-        const csgEvaluator = new Evaluator();
+            let customTemplates = JSON.parse(localStorage.getItem('my_templates') || '[]');
+            let defaultTplOverrides = JSON.parse(localStorage.getItem('default_overrides') || '{}');
 
-        let customTemplates = JSON.parse(localStorage.getItem('my_templates') || '[]');
-        let defaultTplOverrides = JSON.parse(localStorage.getItem('default_overrides') || '{}');
+            // --- POUZE DROID FONTY (PODPORA ČEŠTINY) ---
+            const fontCache = {}; const fontLoader = new FontLoader();
+            const FONT_BASE = 'https://unpkg.com/three@0.160.0/examples/fonts/';
+            const FONT_MAP = {
+                'droid_sans_bold': 'droid/droid_sans_bold.typeface.json',
+                'droid_serif_bold': 'droid/droid_serif_bold.typeface.json',
+                'droid_sans_regular': 'droid/droid_sans_regular.typeface.json',
+                'droid_serif_regular': 'droid/droid_serif_regular.typeface.json'
+            };
 
-        // --- POUZE DROID FONTY (PODPORA ČEŠTINY) ---
-        const fontCache = {}; const fontLoader = new FontLoader();
-        const FONT_BASE = 'https://unpkg.com/three@0.160.0/examples/fonts/';
-        const FONT_MAP = {
-            'droid_sans_bold': 'droid/droid_sans_bold.typeface.json',
-            'droid_serif_bold': 'droid/droid_serif_bold.typeface.json',
-            'droid_sans_regular': 'droid/droid_sans_regular.typeface.json',
-            'droid_serif_regular': 'droid/droid_serif_regular.typeface.json'
-        };
-
-        function loadFont(key, callback) {
-            // Fallback na droid_sans_bold pro neznámé fonty
-            const safeKey = FONT_MAP[key] ? key : 'droid_sans_bold';
-            if (fontCache[safeKey]) { callback(fontCache[safeKey]); return; }
-            fontLoader.load(FONT_BASE + FONT_MAP[safeKey], (font) => { fontCache[safeKey] = font; callback(font); });
-        }
-
-        loadFont('droid_sans_bold', (font) => {
-            window.toggleDrawer('templates'); setMode('parametric'); window.loadTemplate('classic'); renderCustomTemplates();
-        });
-
-        // --- UI ---
-        let drawerOpen = false; let activeTab = '';
-        window.toggleDrawer = function(tabName) {
-            const drawer = document.getElementById('left-drawer'); const toolbar = document.getElementById('transform-toolbar');
-            if (drawerOpen && activeTab === tabName) {
-                drawer.classList.remove('open'); document.getElementById('tab-' + tabName).classList.remove('active');
-                toolbar.classList.remove('shifted'); drawerOpen = false; activeTab = ''; return;
+            function loadFont(key, callback) {
+                // Fallback na droid_sans_bold pro neznámé fonty
+                const safeKey = FONT_MAP[key] ? key : 'droid_sans_bold';
+                if (fontCache[safeKey]) { callback(fontCache[safeKey]); return; }
+                fontLoader.load(FONT_BASE + FONT_MAP[safeKey], (font) => { fontCache[safeKey] = font; callback(font); });
             }
-            document.querySelectorAll('.nav-icon').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.drawer-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabName).classList.add('active'); document.getElementById('content-' + tabName).classList.add('active');
-            
-            drawer.classList.add('open'); if(currentMode === 'FREEFORM') toolbar.classList.add('shifted'); 
-            drawerOpen = true; activeTab = tabName;
-            
-            if(tabName === 'editor' && currentMode !== 'FREEFORM') setMode('freeform');
-            else if (tabName === 'templates' && currentMode !== 'PARAMETRIC') { setMode('parametric'); window.loadTemplate('classic'); }
-        };
 
-        window.clearScene = function() {
-            if(confirm("Opravdu smazat vše na ploše?")) {
+            loadFont('droid_sans_bold', (font) => {
+                window.toggleDrawer('templates'); setMode('parametric'); window.loadTemplate('classic'); renderCustomTemplates();
+            });
+
+            // --- UI ---
+            let drawerOpen = false; let activeTab = '';
+            window.toggleDrawer = function(tabName) {
+                const drawer = document.getElementById('left-drawer'); const toolbar = document.getElementById('transform-toolbar');
+                if (drawerOpen && activeTab === tabName) {
+                    drawer.classList.remove('open'); document.getElementById('tab-' + tabName).classList.remove('active');
+                    toolbar.classList.remove('shifted'); drawerOpen = false; activeTab = ''; return;
+                }
+                document.querySelectorAll('.nav-icon').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.drawer-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-' + tabName).classList.add('active'); document.getElementById('content-' + tabName).classList.add('active');
+                
+                drawer.classList.add('open'); if(currentMode === 'FREEFORM') toolbar.classList.add('shifted'); 
+                drawerOpen = true; activeTab = tabName;
+                
+                if(tabName === 'editor' && currentMode !== 'FREEFORM') setMode('freeform');
+                else if (tabName === 'templates' && currentMode !== 'PARAMETRIC') { setMode('parametric'); window.loadTemplate('classic'); }
+            };
+
+            window.clearScene = function() {
+                if(confirm("Opravdu smazat vše na ploše?")) {
+                    transformControl.detach(); selectionBox.visible = false; document.getElementById('right-panel').style.display = 'none';
+                    parametricGroup.clear(); freeformGroup.children.forEach(c => { if(c.geometry) c.geometry.dispose(); if(c.material) c.material.dispose(); });
+                    freeformGroup.clear(); freeObjects.length = 0; freeHistory.length = 0; freeSelected = null;
+                }
+            };
+
+            function setMode(modeName) {
                 transformControl.detach(); selectionBox.visible = false; document.getElementById('right-panel').style.display = 'none';
-                parametricGroup.clear(); freeformGroup.children.forEach(c => { if(c.geometry) c.geometry.dispose(); if(c.material) c.material.dispose(); });
-                freeformGroup.clear(); freeObjects.length = 0; freeHistory.length = 0; freeSelected = null;
+                parametricGroup.clear(); freeformGroup.clear(); freeObjects.length = 0; freeHistory.length = 0; freeSelected = null;
+                const toolbar = document.getElementById('transform-toolbar');
+
+                if (modeName === 'freeform') {
+                    currentMode = 'FREEFORM'; toolbar.style.display = 'flex';
+                    if(drawerOpen) toolbar.classList.add('shifted');
+                    addFreeformBox(10, 10, 10, 'Kostka', null); camera.position.set(60, 60, 100);
+                } else {
+                    currentMode = 'PARAMETRIC'; toolbar.style.display = 'none';
+                    document.getElementById('right-panel').style.display = 'block'; document.getElementById('props-parametric').style.display = 'block'; document.getElementById('props-freeform').style.display = 'none';
+                    camera.position.set(0, 80, 0);
+                }
+                camera.lookAt(0,0,0);
             }
-        };
 
-        function setMode(modeName) {
-            transformControl.detach(); selectionBox.visible = false; document.getElementById('right-panel').style.display = 'none';
-            parametricGroup.clear(); freeformGroup.clear(); freeObjects.length = 0; freeHistory.length = 0; freeSelected = null;
-            const toolbar = document.getElementById('transform-toolbar');
+            // --- PARAMETRY ---
+            const params = { 
+                text: "Text", font: 'droid_sans_bold', shapeType: 'rect',
+                plateColor: '#2c3e50', borderColor: '#34495e', textColor: '#ffffff', roughness: 0.3,
+                autoSize: true, width: 60, height: 20, padX: 10, padY: 6, depth: 3, radius: 4, 
+                hasBorder: false, borderW: 2, borderH: 1.5, 
+                hasHole: true, holePos: 'right', holeRad: 3, holeOff: 8, 
+                textSize: 10, textDepth: 2, letterSpacing: 0, textX: 0, textY: 0, centerText: true, bevelText: false
+            };
 
-            if (modeName === 'freeform') {
-                currentMode = 'FREEFORM'; toolbar.style.display = 'flex';
-                if(drawerOpen) toolbar.classList.add('shifted');
-                addFreeformBox(10, 10, 10, 'Kostka', null); camera.position.set(60, 60, 100);
-            } else {
-                currentMode = 'PARAMETRIC'; toolbar.style.display = 'none';
-                document.getElementById('right-panel').style.display = 'block'; document.getElementById('props-parametric').style.display = 'block'; document.getElementById('props-freeform').style.display = 'none';
-                camera.position.set(0, 80, 0);
+            const numInputs = ['width', 'height', 'padX', 'padY', 'depth', 'radius', 'borderW', 'borderH', 'holeRad', 'holeOff', 'textSize', 'textDepth', 'letterSpacing', 'textX', 'textY'];
+            let currentParametricTplId = null;
+
+            function syncParamUI() {
+                document.getElementById('p_text').value = params.text; document.getElementById('p_font').value = params.font; document.getElementById('s_shapeType').value = params.shapeType;
+                document.getElementById('c_autoSize').checked = params.autoSize; document.getElementById('c_hasBorder').checked = params.hasBorder; document.getElementById('c_hasHole').checked = params.hasHole;
+                document.getElementById('c_centerText').checked = params.centerText; document.getElementById('c_bevelText').checked = params.bevelText; document.getElementById('s_holePos').value = params.holePos;
+                document.getElementById('p_plateColor').value = params.plateColor; document.getElementById('p_borderColor').value = params.borderColor; document.getElementById('p_textColor').value = params.textColor;
+                numInputs.forEach(id => { const el = document.getElementById('p_' + id); if(el) { el.value = params[id]; document.getElementById('v_' + id).innerText = params[id]; } });
+                
+                document.getElementById('manual-size-group').style.display = params.autoSize ? 'none' : 'block';
+                document.getElementById('pad-settings').style.display = params.autoSize ? 'block' : 'none';
+                document.getElementById('border-settings').style.display = params.hasBorder ? 'block' : 'none';
+                document.getElementById('hole-settings').style.display = params.hasHole ? 'block' : 'none';
+                document.getElementById('text-pos-group').style.display = params.centerText ? 'none' : 'block';
+                document.getElementById('group-radius').style.display = (params.shapeType === 'rect') ? 'flex' : 'none';
             }
-            camera.lookAt(0,0,0);
-        }
 
-        // --- PARAMETRY ---
-        const params = { 
-            text: "Text", font: 'droid_sans_bold', shapeType: 'rect',
-            plateColor: '#2c3e50', borderColor: '#34495e', textColor: '#ffffff', roughness: 0.3,
-            autoSize: true, width: 60, height: 20, padX: 10, padY: 6, depth: 3, radius: 4, 
-            hasBorder: false, borderW: 2, borderH: 1.5, 
-            hasHole: true, holePos: 'right', holeRad: 3, holeOff: 8, 
-            textSize: 10, textDepth: 2, letterSpacing: 0, textX: 0, textY: 0, centerText: true, bevelText: false
-        };
+            function updateParametricTplUI() {
+                const btnUpdate = document.getElementById('updateParamTplBtn'); const statusText = document.getElementById('param-tpl-status-text');
+                if (currentParametricTplId) {
+                    btnUpdate.disabled = false; btnUpdate.style.opacity = '1';
+                    let tplName = "";
+                    if(['classic', 'dogtag', 'hexagon', 'coin', 'large', 'tag'].includes(currentParametricTplId)) {
+                        btnUpdate.innerText = `🔄 Přepsat výchozí šablonu`; tplName = params.text || "Výchozí šablona";
+                    } else {
+                        const tpl = customTemplates.find(t => t.id === currentParametricTplId);
+                        if(tpl) tplName = tpl.name; btnUpdate.innerText = `🔄 Přepsat tuto šablonu`;
+                    }
+                    statusText.innerText = `Upravuješ: ${tplName}`;
+                } else { btnUpdate.disabled = true; btnUpdate.style.opacity = '0.3'; statusText.innerText = ""; }
+                // Aktualizovat i seznam šablon (pro živý náhled názvů)
+                renderDefaultTemplates();
+            }
 
-        const numInputs = ['width', 'height', 'padX', 'padY', 'depth', 'radius', 'borderW', 'borderH', 'holeRad', 'holeOff', 'textSize', 'textDepth', 'letterSpacing', 'textX', 'textY'];
-        let currentParametricTplId = null;
+            // Výchozí šablony - NÁZEV se bere z aktuálního textu šablony (nebo defaultního)
+            const DEFAULT_TEMPLATES = {
+                'classic': {text:"Klíčenka", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:10, padY:6, depth:3, radius:4, hasBorder:false, hasHole:true, holePos:'right', holeRad:3, holeOff:8, textSize:10, textDepth:2, textX:0, textY:0, centerText:true, bevelText:false},
+                'dogtag': {text:"BULLDOG", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:12, padY:6, depth:2, radius:14, hasBorder:true, borderW:1.5, borderH:1, hasHole:true, holePos:'left', holeRad:2.5, holeOff:6, textSize:10, textDepth:1, textX:0, textY:0, centerText:true, bevelText:false},
+                'hexagon': {text:"HEX", font:'droid_sans_bold', shapeType:'hexagon', autoSize:true, padX:15, padY:15, depth:3, radius:0, hasBorder:true, borderW:2, borderH:1.5, hasHole:true, holePos:'top', holeRad:2.5, holeOff:8, textSize:12, textDepth:1.5, textX:0, textY:0, centerText:true, bevelText:false},
+                'coin': {text:"10", font:'droid_sans_bold', shapeType:'circle', autoSize:true, padX:10, padY:10, depth:2, radius:0, hasBorder:true, borderW:2, borderH:1.5, hasHole:false, holePos:'top', holeRad:0, holeOff:0, textSize:16, textDepth:1.5, textX:0, textY:0, centerText:true, bevelText:false},
+                'large': {text:"JMENOVKA", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:20, padY:10, depth:2, radius:2, hasBorder:true, borderW:3, borderH:2, hasHole:false, textSize:15, textDepth:1, textX:0, textY:0, centerText:true, bevelText:false},
+                'tag': {text:"MAX", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:8, padY:4, depth:2, radius:7.5, hasBorder:false, hasHole:true, holePos:'top', holeRad:2, holeOff:5, textSize:8, textDepth:1, textX:0, textY:-1, centerText:true, bevelText:false},
+            };
 
-        function syncParamUI() {
-            document.getElementById('p_text').value = params.text; document.getElementById('p_font').value = params.font; document.getElementById('s_shapeType').value = params.shapeType;
-            document.getElementById('c_autoSize').checked = params.autoSize; document.getElementById('c_hasBorder').checked = params.hasBorder; document.getElementById('c_hasHole').checked = params.hasHole;
-            document.getElementById('c_centerText').checked = params.centerText; document.getElementById('c_bevelText').checked = params.bevelText; document.getElementById('s_holePos').value = params.holePos;
-            document.getElementById('p_plateColor').value = params.plateColor; document.getElementById('p_borderColor').value = params.borderColor; document.getElementById('p_textColor').value = params.textColor;
-            numInputs.forEach(id => { const el = document.getElementById('p_' + id); if(el) { el.value = params[id]; document.getElementById('v_' + id).innerText = params[id]; } });
-            
-            document.getElementById('manual-size-group').style.display = params.autoSize ? 'none' : 'block';
-            document.getElementById('pad-settings').style.display = params.autoSize ? 'block' : 'none';
-            document.getElementById('border-settings').style.display = params.hasBorder ? 'block' : 'none';
-            document.getElementById('hole-settings').style.display = params.hasHole ? 'block' : 'none';
-            document.getElementById('text-pos-group').style.display = params.centerText ? 'none' : 'block';
-            document.getElementById('group-radius').style.display = (params.shapeType === 'rect') ? 'flex' : 'none';
-        }
+            // Pomocné funkce pro získání aktuálního textu/názvu šablony
+            function getDefaultTplData(type) {
+                return defaultTplOverrides[type] ? defaultTplOverrides[type] : DEFAULT_TEMPLATES[type];
+            }
 
-        function updateParametricTplUI() {
-            const btnUpdate = document.getElementById('updateParamTplBtn'); const statusText = document.getElementById('param-tpl-status-text');
-            if (currentParametricTplId) {
-                btnUpdate.disabled = false; btnUpdate.style.opacity = '1';
-                let tplName = "";
+            function getDefaultTplLabel(type) {
+                const data = getDefaultTplData(type);
+                return data && data.text ? data.text : type;
+            }
+
+            // Renderování výchozích šablon s živými názvy
+            function renderDefaultTemplates() {
+                const list = document.getElementById('default-templates-list');
+                if (!list) return;
+                list.innerHTML = '';
+                const templateKeys = ['classic', 'dogtag', 'hexagon', 'coin', 'large', 'tag'];
+                templateKeys.forEach(type => {
+                    const label = getDefaultTplLabel(type);
+                    const btn = document.createElement('button');
+                    btn.className = 'template-btn' + (currentParametricTplId === type ? ' active' : '');
+                    btn.style.cssText = currentParametricTplId === type ? 'border-color:var(--accent); background:#1a3a5c;' : '';
+                    btn.textContent = label;
+                    btn.onclick = () => window.loadTemplate(type);
+                    list.appendChild(btn);
+                });
+            }
+
+            window.loadTemplate = function(type) {
+                currentParametricTplId = type; 
+                const dataToLoad = getDefaultTplData(type);
+                if (dataToLoad) Object.assign(params, JSON.parse(JSON.stringify(dataToLoad)));
+                syncParamUI(); generateParametric(); updateParametricTplUI();
+            };
+
+            function createBaseShape(type, w, h, r) {
+                const shape = new THREE.Shape(); const w2 = w/2, h2 = h/2; 
+                if (type === 'rect') {
+                    r = Math.min(r, Math.min(w2, h2)); 
+                    shape.moveTo(-w2+r, h2); shape.lineTo(w2-r, h2); shape.quadraticCurveTo(w2, h2, w2, h2-r); shape.lineTo(w2, -h2+r); shape.quadraticCurveTo(w2, -h2, w2-r, -h2); shape.lineTo(-w2+r, -h2); shape.quadraticCurveTo(-w2, -h2, -w2, -h2+r); shape.lineTo(-w2, h2-r); shape.quadraticCurveTo(-w2, h2, -w2+r, h2);
+                } else if (type === 'hexagon') {
+                    for (let i = 0; i < 6; i++) { const angle = (i * Math.PI) / 3 + Math.PI/2; const px = Math.cos(angle) * w2; const py = Math.sin(angle) * h2; if (i === 0) shape.moveTo(px, py); else shape.lineTo(px, py); } shape.closePath();
+                } else if (type === 'circle') { shape.absellipse(0, 0, w2, h2, 0, Math.PI * 2, false); }
+                return shape;
+            }
+
+            function getHoleCenter(type, plateW, plateH, holePos, holeOff) {
+                let hX = 0, hY = 0;
+                if (type === 'rect' || type === 'circle') {
+                    if(holePos === 'right')  hX = plateW/2 - holeOff; else if(holePos === 'left')   hX = -plateW/2 + holeOff;
+                    else if(holePos === 'top')    hY = plateH/2 - holeOff; else if(holePos === 'bottom') hY = -plateH/2 + holeOff;
+                } else if (type === 'hexagon') {
+                    if(holePos === 'right')  hX = plateW/2 - holeOff + 2; else if(holePos === 'left')   hX = -plateW/2 + holeOff - 2;
+                    else if(holePos === 'top')    hY = plateH/2 - holeOff + 2; else if(holePos === 'bottom') hY = -plateH/2 + holeOff - 2;
+                }
+                return { hX, hY };
+            }
+
+            // --- FIX Z-FIGHTINGU: Všechny objekty mají stejný materiál s polygon offset ---
+            function createPlateMat(color) {
+                const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: params.roughness });
+                mat.polygonOffset = true; mat.polygonOffsetFactor = 1; mat.polygonOffsetUnits = 1;
+                return mat;
+            }
+
+            function generateParametric() {
+                if (currentMode !== 'PARAMETRIC') return; 
+                loadFont(params.font, (font) => {
+                    // Dispose starých geometrií
+                    parametricGroup.children.forEach(c => { if(c.geometry) c.geometry.dispose(); });
+                    parametricGroup.clear();
+                    
+                    let textGeom = null; let txtW = 0, txtH = 0;
+
+                    if (params.text.trim() !== '') {
+                        textGeom = new TextGeometry(params.text, { 
+                            font: font, size: params.textSize, height: params.textDepth, curveSegments: 6, 
+                            bevelEnabled: params.bevelText, bevelThickness: 0.2, bevelSize: 0.1, bevelSegments: 2,
+                            letterSpacing: params.letterSpacing
+                        }); 
+                        textGeom.computeBoundingBox(); 
+                        txtW = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x; 
+                        txtH = textGeom.boundingBox.max.y - textGeom.boundingBox.min.y;
+                    }
+
+                    let plateW = params.width, plateH = params.height;
+                    if (params.autoSize && textGeom) {
+                        plateW = txtW + params.padX * 2; plateH = txtH + params.padY * 2;
+                        if (params.hasHole && params.holeRad > 0) { 
+                            const margin = params.holeRad * 2 + params.holeOff;
+                            if(params.holePos === 'right' || params.holePos === 'left') plateW += margin; 
+                            if(params.holePos === 'top' || params.holePos === 'bottom') plateH += margin; 
+                        }
+                        if(params.shapeType === 'circle') plateW = plateH = Math.max(plateW, plateH); 
+                        document.getElementById('p_width').value = plateW; document.getElementById('v_width').innerText = Math.round(plateW); 
+                        document.getElementById('p_height').value = plateH; document.getElementById('v_height').innerText = Math.round(plateH);
+                    }
+                    const safeHoleOff = Math.max(params.holeOff, params.holeRad + 0.5);
+
+                    // Podložka
+                    const shape = createBaseShape(params.shapeType, plateW, plateH, params.radius);
+                    let baseGeom = new THREE.ExtrudeGeometry(shape, {
+                        depth: params.depth,
+                        bevelEnabled: false,
+                        curveSegments: 64,   // <<< KRITICKÉ
+                        steps: 2             // <<< KRITICKÉ
+                    });
+                    
+                    
+                    let finalBrush = new Brush(baseGeom, createPlateMat(params.plateColor));
+                    finalBrush.updateMatrixWorld();
+
+                    // Rámeček - FIX: posunout jen o epsilon nad podložku aby nespojovaly plochy
+                    if (params.hasBorder) {
+                        const borderOuter = createBaseShape(params.shapeType, plateW, plateH, params.radius);
+                        const bRadInner = (params.shapeType === 'rect') ? Math.max(0, params.radius - params.borderW) : 0;
+                        const borderInner = createBaseShape(params.shapeType, plateW - params.borderW*2, plateH - params.borderW*2, bRadInner);
+                        
+                        // Hole musí být Path, ne Shape
+                        const innerPath = new THREE.Path();
+                        const innerPts = borderInner.getPoints(12);
+                        innerPath.setFromPoints(innerPts);
+                        borderOuter.holes = [innerPath];
+                        
+                        let borderGeom = new THREE.ExtrudeGeometry(borderOuter, { depth: params.borderH, bevelEnabled: false });
+                        // Rámeček leží na VRCHNÍ ploše podložky (Z=0), ne zarovnaný s dnem
+                        borderGeom.translate(0, 0, 0);
+                        
+                        let borderBrush = new Brush(borderGeom, createPlateMat(params.borderColor));
+                        borderBrush.updateMatrixWorld();
+                        finalBrush = csgEvaluator.evaluate(finalBrush, borderBrush, ADDITION); 
+                    }
+
+                    // Dírka
+                    if (params.hasHole && params.holeRad > 0) {
+                        const totalDepth = params.depth + (params.hasBorder ? params.borderH : 0) + 2;
+                        const holeGeom = new THREE.CylinderGeometry(params.holeRad, params.holeRad, totalDepth + 2, 32);
+                        holeGeom.rotateX(Math.PI / 2);
+                        holeGeom.translate(0, 0, -(params.depth + 1)); // Vyčnívat na obě strany
+
+                        const { hX, hY } = getHoleCenter(params.shapeType, plateW, plateH, params.holePos, safeHoleOff);
+                        let holeBrush = new Brush(holeGeom, createPlateMat(params.plateColor));
+                        holeBrush.position.set(hX, hY, 0); 
+                        holeBrush.updateMatrixWorld();
+                        finalBrush = csgEvaluator.evaluate(finalBrush, holeBrush, SUBTRACTION); 
+                    }
+
+                    // Překlopit na mřížku
+                    finalBrush.rotation.x = -Math.PI / 2;
+                    parametricGroup.add(finalBrush);
+
+                    // Text - FIX z-fightingu: text se zanoří přesně do podložky, polygonOffset zajistí správné renderování
+                    if (textGeom) {
+                        let offX = params.centerText ? -txtW/2 : params.textX;
+                        let offY = params.centerText ? -txtH/2 : params.textY;
+                        
+                        if(params.centerText && params.hasHole) {
+                            if(params.holePos === 'right') offX -= (params.holeRad + params.holeOff)/2;
+                            if(params.holePos === 'left') offX += (params.holeRad + params.holeOff)/2;
+                            if(params.holePos === 'top') offY -= (params.holeRad + params.holeOff)/2;
+                            if(params.holePos === 'bottom') offY += (params.holeRad + params.holeOff)/2;
+                        } else if (!params.centerText) {
+                            offX = params.textX; offY = params.textY;
+                        }
+
+                        // Text se posadí přesně na povrch podložky - žádné z-fighting
+                        textGeom.translate(offX, offY, 0);
+                        const textMat = new THREE.MeshStandardMaterial({ 
+                            color: new THREE.Color(params.textColor), 
+                            roughness: 0.1,
+                            polygonOffset: true,
+                            polygonOffsetFactor: -1,
+                            polygonOffsetUnits: -1
+                        });
+                        const textMesh = new THREE.Mesh(textGeom, textMat);
+                        textMesh.rotation.x = -Math.PI / 2;
+                        textMesh.position.y = 0.01;
+                        parametricGroup.add(textMesh);
+                    }
+
+                    // Po změně textu aktualizuj název šablony v postranním panelu
+                    updateParametricTplUI();
+                });
+            }
+
+            // Posluchače - text input aktualizuje i název šablony živě
+            document.getElementById('p_text').addEventListener('input', (e) => { 
+                params.text = e.target.value; 
+                generateParametric(); 
+                // Živá aktualizace názvu v seznamu šablon
+                renderDefaultTemplates();
+            });
+            document.getElementById('p_font').addEventListener('change', (e) => { params.font = e.target.value; generateParametric(); });
+            document.getElementById('s_shapeType').addEventListener('change', (e) => { params.shapeType = e.target.value; document.getElementById('group-radius').style.display = (e.target.value === 'rect') ? 'flex' : 'none'; generateParametric(); });
+            document.getElementById('c_autoSize').addEventListener('change', (e) => { params.autoSize = e.target.checked; syncParamUI(); generateParametric(); });
+            document.getElementById('c_hasBorder').addEventListener('change', (e) => { params.hasBorder = e.target.checked; syncParamUI(); generateParametric(); });
+            document.getElementById('c_hasHole').addEventListener('change', (e) => { params.hasHole = e.target.checked; document.getElementById('hole-settings').style.display = e.target.checked ? 'block' : 'none'; generateParametric(); });
+            document.getElementById('c_centerText').addEventListener('change', (e) => { params.centerText = e.target.checked; document.getElementById('text-pos-group').style.display = e.target.checked ? 'none' : 'block'; generateParametric(); });
+            document.getElementById('c_bevelText').addEventListener('change', (e) => { params.bevelText = e.target.checked; generateParametric(); });
+            document.getElementById('s_holePos').addEventListener('change', (e) => { params.holePos = e.target.value; generateParametric(); });
+            document.getElementById('p_plateColor').addEventListener('input', (e) => { params.plateColor = e.target.value; generateParametric(); });
+            document.getElementById('p_borderColor').addEventListener('input', (e) => { params.borderColor = e.target.value; generateParametric(); });
+            document.getElementById('p_textColor').addEventListener('input', (e) => { params.textColor = e.target.value; generateParametric(); });
+            numInputs.forEach(id => { 
+                const el = document.getElementById('p_' + id); 
+                if(el) el.addEventListener('input', (e) => { 
+                    if(currentMode !== 'PARAMETRIC') return; 
+                    const val = parseFloat(e.target.value); document.getElementById('v_' + id).innerText = val; params[id] = val; generateParametric(); 
+                }); 
+            });
+
+            document.getElementById('saveParamTplBtn').addEventListener('click', () => {
+                const name = prompt("Název tvé nové parametrické šablony:", params.text || "Můj štítek"); if(!name) return;
+                const newId = Date.now();
+                customTemplates.push({ id: newId, name: name, mode: 'PARAMETRIC', params: JSON.parse(JSON.stringify(params)) });
+                saveCustomTemplates(); currentParametricTplId = newId; updateParametricTplUI(); alert("Uloženo jako nová šablona.");
+            });
+
+            document.getElementById('updateParamTplBtn').addEventListener('click', () => {
+                if(!currentParametricTplId) return;
                 if(['classic', 'dogtag', 'hexagon', 'coin', 'large', 'tag'].includes(currentParametricTplId)) {
-                    btnUpdate.innerText = `🔄 Přepsat výchozí šablonu`; tplName = params.text || "Výchozí šablona";
+                    defaultTplOverrides[currentParametricTplId] = JSON.parse(JSON.stringify(params));
+                    localStorage.setItem('default_overrides', JSON.stringify(defaultTplOverrides));
+                    renderDefaultTemplates();
+                    alert(`Výchozí šablona byla úspěšně přepsána.`);
                 } else {
                     const tpl = customTemplates.find(t => t.id === currentParametricTplId);
-                    if(tpl) tplName = tpl.name; btnUpdate.innerText = `🔄 Přepsat tuto šablonu`;
+                    if(tpl && tpl.mode === 'PARAMETRIC') { tpl.params = JSON.parse(JSON.stringify(params)); saveCustomTemplates(); alert(`Šablona '${tpl.name}' byla přepsána.`); }
                 }
-                statusText.innerText = `Upravuješ: ${tplName}`;
-            } else { btnUpdate.disabled = true; btnUpdate.style.opacity = '0.3'; statusText.innerText = ""; }
-            // Aktualizovat i seznam šablon (pro živý náhled názvů)
-            renderDefaultTemplates();
-        }
-
-        // Výchozí šablony - NÁZEV se bere z aktuálního textu šablony (nebo defaultního)
-        const DEFAULT_TEMPLATES = {
-            'classic': {text:"Klíčenka", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:10, padY:6, depth:3, radius:4, hasBorder:false, hasHole:true, holePos:'right', holeRad:3, holeOff:8, textSize:10, textDepth:2, textX:0, textY:0, centerText:true, bevelText:false},
-            'dogtag': {text:"BULLDOG", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:12, padY:6, depth:2, radius:14, hasBorder:true, borderW:1.5, borderH:1, hasHole:true, holePos:'left', holeRad:2.5, holeOff:6, textSize:10, textDepth:1, textX:0, textY:0, centerText:true, bevelText:false},
-            'hexagon': {text:"HEX", font:'droid_sans_bold', shapeType:'hexagon', autoSize:true, padX:15, padY:15, depth:3, radius:0, hasBorder:true, borderW:2, borderH:1.5, hasHole:true, holePos:'top', holeRad:2.5, holeOff:8, textSize:12, textDepth:1.5, textX:0, textY:0, centerText:true, bevelText:false},
-            'coin': {text:"10", font:'droid_sans_bold', shapeType:'circle', autoSize:true, padX:10, padY:10, depth:2, radius:0, hasBorder:true, borderW:2, borderH:1.5, hasHole:false, holePos:'top', holeRad:0, holeOff:0, textSize:16, textDepth:1.5, textX:0, textY:0, centerText:true, bevelText:false},
-            'large': {text:"JMENOVKA", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:20, padY:10, depth:2, radius:2, hasBorder:true, borderW:3, borderH:2, hasHole:false, textSize:15, textDepth:1, textX:0, textY:0, centerText:true, bevelText:false},
-            'tag': {text:"MAX", font:'droid_sans_bold', shapeType:'rect', autoSize:true, padX:8, padY:4, depth:2, radius:7.5, hasBorder:false, hasHole:true, holePos:'top', holeRad:2, holeOff:5, textSize:8, textDepth:1, textX:0, textY:-1, centerText:true, bevelText:false},
-        };
-
-        // Pomocné funkce pro získání aktuálního textu/názvu šablony
-        function getDefaultTplData(type) {
-            return defaultTplOverrides[type] ? defaultTplOverrides[type] : DEFAULT_TEMPLATES[type];
-        }
-
-        function getDefaultTplLabel(type) {
-            const data = getDefaultTplData(type);
-            return data && data.text ? data.text : type;
-        }
-
-        // Renderování výchozích šablon s živými názvy
-        function renderDefaultTemplates() {
-            const list = document.getElementById('default-templates-list');
-            if (!list) return;
-            list.innerHTML = '';
-            const templateKeys = ['classic', 'dogtag', 'hexagon', 'coin', 'large', 'tag'];
-            templateKeys.forEach(type => {
-                const label = getDefaultTplLabel(type);
-                const btn = document.createElement('button');
-                btn.className = 'template-btn' + (currentParametricTplId === type ? ' active' : '');
-                btn.style.cssText = currentParametricTplId === type ? 'border-color:var(--accent); background:#1a3a5c;' : '';
-                btn.textContent = label;
-                btn.onclick = () => window.loadTemplate(type);
-                list.appendChild(btn);
             });
-        }
 
-        window.loadTemplate = function(type) {
-            currentParametricTplId = type; 
-            const dataToLoad = getDefaultTplData(type);
-            if (dataToLoad) Object.assign(params, JSON.parse(JSON.stringify(dataToLoad)));
-            syncParamUI(); generateParametric(); updateParametricTplUI();
-        };
+            // --- VOLNÝ EDITOR ---
+            let freeSelected = null; let freeTransformStart = null;
 
-        function createBaseShape(type, w, h, r) {
-            const shape = new THREE.Shape(); const w2 = w/2, h2 = h/2; 
-            if (type === 'rect') {
-                r = Math.min(r, Math.min(w2, h2)); 
-                shape.moveTo(-w2+r, h2); shape.lineTo(w2-r, h2); shape.quadraticCurveTo(w2, h2, w2, h2-r); shape.lineTo(w2, -h2+r); shape.quadraticCurveTo(w2, -h2, w2-r, -h2); shape.lineTo(-w2+r, -h2); shape.quadraticCurveTo(-w2, -h2, -w2, -h2+r); shape.lineTo(-w2, h2-r); shape.quadraticCurveTo(-w2, h2, -w2+r, h2);
-            } else if (type === 'hexagon') {
-                for (let i = 0; i < 6; i++) { const angle = (i * Math.PI) / 3 + Math.PI/2; const px = Math.cos(angle) * w2; const py = Math.sin(angle) * h2; if (i === 0) shape.moveTo(px, py); else shape.lineTo(px, py); } shape.closePath();
-            } else if (type === 'circle') { shape.absellipse(0, 0, w2, h2, 0, Math.PI * 2, false); }
-            return shape;
-        }
-
-        function getHoleCenter(type, plateW, plateH, holePos, holeOff) {
-            let hX = 0, hY = 0;
-            if (type === 'rect' || type === 'circle') {
-                if(holePos === 'right')  hX = plateW/2 - holeOff; else if(holePos === 'left')   hX = -plateW/2 + holeOff;
-                else if(holePos === 'top')    hY = plateH/2 - holeOff; else if(holePos === 'bottom') hY = -plateH/2 + holeOff;
-            } else if (type === 'hexagon') {
-                if(holePos === 'right')  hX = plateW/2 - holeOff + 2; else if(holePos === 'left')   hX = -plateW/2 + holeOff - 2;
-                else if(holePos === 'top')    hY = plateH/2 - holeOff + 2; else if(holePos === 'bottom') hY = -plateH/2 + holeOff - 2;
-            }
-            return { hX, hY };
-        }
-
-        // --- FIX Z-FIGHTINGU: Všechny objekty mají stejný materiál s polygon offset ---
-        function createPlateMat(color) {
-            const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: params.roughness });
-            mat.polygonOffset = true; mat.polygonOffsetFactor = 1; mat.polygonOffsetUnits = 1;
-            return mat;
-        }
-
-        function generateParametric() {
-            if (currentMode !== 'PARAMETRIC') return; 
-            loadFont(params.font, (font) => {
-                // Dispose starých geometrií
-                parametricGroup.children.forEach(c => { if(c.geometry) c.geometry.dispose(); });
-                parametricGroup.clear();
-                
-                let textGeom = null; let txtW = 0, txtH = 0;
-
-                if (params.text.trim() !== '') {
-                    textGeom = new TextGeometry(params.text, { 
-                        font: font, size: params.textSize, height: params.textDepth, curveSegments: 6, 
-                        bevelEnabled: params.bevelText, bevelThickness: 0.2, bevelSize: 0.1, bevelSegments: 2,
-                        letterSpacing: params.letterSpacing
-                    }); 
-                    textGeom.computeBoundingBox(); 
-                    txtW = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x; 
-                    txtH = textGeom.boundingBox.max.y - textGeom.boundingBox.min.y;
-                }
-
-                let plateW = params.width, plateH = params.height;
-                if (params.autoSize && textGeom) {
-                    plateW = txtW + params.padX * 2; plateH = txtH + params.padY * 2;
-                    if (params.hasHole && params.holeRad > 0) { 
-                        const margin = params.holeRad * 2 + params.holeOff;
-                        if(params.holePos === 'right' || params.holePos === 'left') plateW += margin; 
-                        if(params.holePos === 'top' || params.holePos === 'bottom') plateH += margin; 
-                    }
-                    if(params.shapeType === 'circle') plateW = plateH = Math.max(plateW, plateH); 
-                    document.getElementById('p_width').value = plateW; document.getElementById('v_width').innerText = Math.round(plateW); 
-                    document.getElementById('p_height').value = plateH; document.getElementById('v_height').innerText = Math.round(plateH);
-                }
-                const safeHoleOff = Math.max(params.holeOff, params.holeRad + 0.5);
-
-                // Podložka
-                const shape = createBaseShape(params.shapeType, plateW, plateH, params.radius);
-                let baseGeom = new THREE.ExtrudeGeometry(shape, { depth: params.depth, bevelEnabled: false });
-                baseGeom.translate(0, 0, -params.depth);
-                
-                let finalBrush = new Brush(baseGeom, createPlateMat(params.plateColor));
-                finalBrush.updateMatrixWorld();
-
-                // Rámeček - FIX: posunout jen o epsilon nad podložku aby nespojovaly plochy
-                if (params.hasBorder) {
-                    const borderOuter = createBaseShape(params.shapeType, plateW, plateH, params.radius);
-                    const bRadInner = (params.shapeType === 'rect') ? Math.max(0, params.radius - params.borderW) : 0;
-                    const borderInner = createBaseShape(params.shapeType, plateW - params.borderW*2, plateH - params.borderW*2, bRadInner);
-                    
-                    // Hole musí být Path, ne Shape
-                    const innerPath = new THREE.Path();
-                    const innerPts = borderInner.getPoints(12);
-                    innerPath.setFromPoints(innerPts);
-                    borderOuter.holes = [innerPath];
-                    
-                    let borderGeom = new THREE.ExtrudeGeometry(borderOuter, { depth: params.borderH, bevelEnabled: false });
-                    // Rámeček leží na VRCHNÍ ploše podložky (Z=0), ne zarovnaný s dnem
-                    borderGeom.translate(0, 0, 0);
-                    
-                    let borderBrush = new Brush(borderGeom, createPlateMat(params.borderColor));
-                    borderBrush.updateMatrixWorld();
-                    finalBrush = csgEvaluator.evaluate(finalBrush, borderBrush, ADDITION); 
-                }
-
-                // Dírka
-                if (params.hasHole && params.holeRad > 0) {
-                    const totalDepth = params.depth + (params.hasBorder ? params.borderH : 0) + 2;
-                    const holeGeom = new THREE.CylinderGeometry(params.holeRad, params.holeRad, totalDepth + 2, 32);
-                    holeGeom.rotateX(Math.PI / 2);
-                    holeGeom.translate(0, 0, -(params.depth + 1)); // Vyčnívat na obě strany
-
-                    const { hX, hY } = getHoleCenter(params.shapeType, plateW, plateH, params.holePos, safeHoleOff);
-                    let holeBrush = new Brush(holeGeom, createPlateMat(params.plateColor));
-                    holeBrush.position.set(hX, hY, 0); 
-                    holeBrush.updateMatrixWorld();
-                    finalBrush = csgEvaluator.evaluate(finalBrush, holeBrush, SUBTRACTION); 
-                }
-
-                // Překlopit na mřížku
-                finalBrush.rotation.x = -Math.PI / 2;
-                parametricGroup.add(finalBrush);
-
-                // Text - FIX z-fightingu: text se zanoří přesně do podložky, polygonOffset zajistí správné renderování
-                if (textGeom) {
-                    let offX = params.centerText ? -txtW/2 : params.textX;
-                    let offY = params.centerText ? -txtH/2 : params.textY;
-                    
-                    if(params.centerText && params.hasHole) {
-                        if(params.holePos === 'right') offX -= (params.holeRad + params.holeOff)/2;
-                        if(params.holePos === 'left') offX += (params.holeRad + params.holeOff)/2;
-                        if(params.holePos === 'top') offY -= (params.holeRad + params.holeOff)/2;
-                        if(params.holePos === 'bottom') offY += (params.holeRad + params.holeOff)/2;
-                    } else if (!params.centerText) {
-                        offX = params.textX; offY = params.textY;
-                    }
-
-                    // Text se posadí přesně na povrch podložky - žádné z-fighting
-                    textGeom.translate(offX, offY, -params.textDepth);
-                    const textMat = new THREE.MeshStandardMaterial({ 
-                        color: new THREE.Color(params.textColor), 
-                        roughness: 0.1,
-                        polygonOffset: true,
-                        polygonOffsetFactor: -1,
-                        polygonOffsetUnits: -1
-                    });
-                    const textMesh = new THREE.Mesh(textGeom, textMat);
-                    textMesh.rotation.x = -Math.PI / 2;
-                    textMesh.position.y = params.depth;
-                    parametricGroup.add(textMesh);
-                }
-
-                // Po změně textu aktualizuj název šablony v postranním panelu
-                updateParametricTplUI();
+            transformControl.addEventListener('dragging-changed', (e) => {
+                orbitControls.enabled = !e.value; 
+                if (e.value) { freeTransformStart = { pos: transformControl.object.position.clone(), rot: transformControl.object.quaternion.clone(), scl: transformControl.object.scale.clone() }; } 
+                else if (freeTransformStart) { freeHistory.push({ type: 'transform', object: transformControl.object, old: freeTransformStart }); freeTransformStart = null; }
             });
-        }
-
-        // Posluchače - text input aktualizuje i název šablony živě
-        document.getElementById('p_text').addEventListener('input', (e) => { 
-            params.text = e.target.value; 
-            generateParametric(); 
-            // Živá aktualizace názvu v seznamu šablon
-            renderDefaultTemplates();
-        });
-        document.getElementById('p_font').addEventListener('change', (e) => { params.font = e.target.value; generateParametric(); });
-        document.getElementById('s_shapeType').addEventListener('change', (e) => { params.shapeType = e.target.value; document.getElementById('group-radius').style.display = (e.target.value === 'rect') ? 'flex' : 'none'; generateParametric(); });
-        document.getElementById('c_autoSize').addEventListener('change', (e) => { params.autoSize = e.target.checked; syncParamUI(); generateParametric(); });
-        document.getElementById('c_hasBorder').addEventListener('change', (e) => { params.hasBorder = e.target.checked; syncParamUI(); generateParametric(); });
-        document.getElementById('c_hasHole').addEventListener('change', (e) => { params.hasHole = e.target.checked; document.getElementById('hole-settings').style.display = e.target.checked ? 'block' : 'none'; generateParametric(); });
-        document.getElementById('c_centerText').addEventListener('change', (e) => { params.centerText = e.target.checked; document.getElementById('text-pos-group').style.display = e.target.checked ? 'none' : 'block'; generateParametric(); });
-        document.getElementById('c_bevelText').addEventListener('change', (e) => { params.bevelText = e.target.checked; generateParametric(); });
-        document.getElementById('s_holePos').addEventListener('change', (e) => { params.holePos = e.target.value; generateParametric(); });
-        document.getElementById('p_plateColor').addEventListener('input', (e) => { params.plateColor = e.target.value; generateParametric(); });
-        document.getElementById('p_borderColor').addEventListener('input', (e) => { params.borderColor = e.target.value; generateParametric(); });
-        document.getElementById('p_textColor').addEventListener('input', (e) => { params.textColor = e.target.value; generateParametric(); });
-        numInputs.forEach(id => { 
-            const el = document.getElementById('p_' + id); 
-            if(el) el.addEventListener('input', (e) => { 
-                if(currentMode !== 'PARAMETRIC') return; 
-                const val = parseFloat(e.target.value); document.getElementById('v_' + id).innerText = val; params[id] = val; generateParametric(); 
-            }); 
-        });
-
-        document.getElementById('saveParamTplBtn').addEventListener('click', () => {
-            const name = prompt("Název tvé nové parametrické šablony:", params.text || "Můj štítek"); if(!name) return;
-            const newId = Date.now();
-            customTemplates.push({ id: newId, name: name, mode: 'PARAMETRIC', params: JSON.parse(JSON.stringify(params)) });
-            saveCustomTemplates(); currentParametricTplId = newId; updateParametricTplUI(); alert("Uloženo jako nová šablona.");
-        });
-
-        document.getElementById('updateParamTplBtn').addEventListener('click', () => {
-            if(!currentParametricTplId) return;
-            if(['classic', 'dogtag', 'hexagon', 'coin', 'large', 'tag'].includes(currentParametricTplId)) {
-                defaultTplOverrides[currentParametricTplId] = JSON.parse(JSON.stringify(params));
-                localStorage.setItem('default_overrides', JSON.stringify(defaultTplOverrides));
-                renderDefaultTemplates();
-                alert(`Výchozí šablona byla úspěšně přepsána.`);
-            } else {
-                const tpl = customTemplates.find(t => t.id === currentParametricTplId);
-                if(tpl && tpl.mode === 'PARAMETRIC') { tpl.params = JSON.parse(JSON.stringify(params)); saveCustomTemplates(); alert(`Šablona '${tpl.name}' byla přepsána.`); }
+            function computeBaseOffset(obj){
+                const box = new THREE.Box3().setFromObject(obj);
+                return box.min.y - obj.position.y;
             }
-        });
+            transformControl.addEventListener('objectChange', () => {
+                if (currentMode !== 'FREEFORM') return;
+                if (!freeSelected) return;
 
-        // --- VOLNÝ EDITOR ---
-        let freeSelected = null; let freeTransformStart = null;
+                // spočítáme skutečný spodek objektu ve světě
+                const box = new THREE.Box3().setFromObject(freeSelected);
 
-        transformControl.addEventListener('dragging-changed', (e) => {
-            orbitControls.enabled = !e.value; 
-            if (e.value) { freeTransformStart = { pos: transformControl.object.position.clone(), rot: transformControl.object.quaternion.clone(), scl: transformControl.object.scale.clone() }; } 
-            else if (freeTransformStart) { freeHistory.push({ type: 'transform', object: transformControl.object, old: freeTransformStart }); freeTransformStart = null; }
-        });
-        transformControl.addEventListener('change', () => { if(currentMode === 'FREEFORM' && freeSelected) { updateFreeProps(); selectionBox.update(); } });
+                // jestli je pod podložkou (Y = 0)
+                if (box.min.y < 0) {
+                    const correction = -box.min.y;
+                    freeSelected.position.y += correction;
+                }
 
-        function freeUndo() {
-            if (freeHistory.length === 0 || currentMode !== 'FREEFORM') return; const action = freeHistory.pop();
-            transformControl.detach(); document.getElementById('right-panel').style.display = 'none'; selectionBox.visible = false; freeSelected = null;
-            if (action.type === 'add') { freeformGroup.remove(action.object); freeObjects.splice(freeObjects.indexOf(action.object), 1); } 
-            else if (action.type === 'delete') { freeformGroup.add(action.object); freeObjects.push(action.object); selectFreeObj(action.object); } 
-            else if (action.type === 'transform') { action.object.position.copy(action.old.pos); action.object.quaternion.copy(action.old.rot); action.object.scale.copy(action.old.scl); selectFreeObj(action.object); }
-        }
+                selectionBox.update();
+                updateFreeProps();
+            });
+            
+            function freeUndo() {
+                if (freeHistory.length === 0 || currentMode !== 'FREEFORM') return; const action = freeHistory.pop();
+                transformControl.detach(); document.getElementById('right-panel').style.display = 'none'; selectionBox.visible = false; freeSelected = null;
+                if (action.type === 'add') { freeformGroup.remove(action.object); freeObjects.splice(freeObjects.indexOf(action.object), 1); } 
+                else if (action.type === 'delete') { freeformGroup.add(action.object); freeObjects.push(action.object); selectFreeObj(action.object); } 
+                else if (action.type === 'transform') { action.object.position.copy(action.old.pos); action.object.quaternion.copy(action.old.rot); action.object.scale.copy(action.old.scl); selectFreeObj(action.object); }
+            }
 
-        function getBaseMat() { return new THREE.MeshStandardMaterial({ color: 0x8e44ad, metalness:0, roughness:0.5 }); }
-        
-        function addFreeformPrimitive(geom, name) { 
-            const mesh = new THREE.Mesh(geom, getBaseMat()); 
-            mesh.geometry.computeBoundingBox(); const box = mesh.geometry.boundingBox;
-            mesh.position.set(0, -box.min.y, 0); 
-            mesh.userData = { isBox: false, isText: false, type: name, rounding: 0 }; 
-            freeformGroup.add(mesh); freeObjects.push(mesh); selectFreeObj(mesh); freeHistory.push({ type: 'add', object: mesh }); 
-        }
-        
-        function addFreeformBox(w, h, d, name, tplId = null) {
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), getBaseMat()); 
-            mesh.position.set(0, h/2, 0); 
-            mesh.userData = { isBox: true, isText: false, type: name, rounding: 0, bW: w, bH: h, bD: d, templateId: tplId }; 
-            freeformGroup.add(mesh); freeObjects.push(mesh); selectFreeObj(mesh); freeHistory.push({ type: 'add', object: mesh });
-        }
-        
-        function addFreeformText() {
-            loadFont('droid_sans_bold', (font) => {
-                const tg = new TextGeometry("TEXT", { font: font, size: 10, height: 3, curveSegments: 4, bevelEnabled: false }); 
-                tg.computeBoundingBox(); tg.translate(-0.5 * (tg.boundingBox.max.x - tg.boundingBox.min.x), 0, -3); 
-                const mesh = new THREE.Mesh(tg, getBaseMat()); 
-                mesh.rotation.x = -Math.PI / 2; 
-                mesh.position.set(0, 3, 0); 
-                mesh.userData = { isBox: false, isText: true, text: "TEXT", type: 'Text', rounding: 0 }; 
+            function getBaseMat() { return new THREE.MeshStandardMaterial({ color: 0x8e44ad, metalness:0, roughness:0.5 }); }
+            
+            function addFreeformPrimitive(geom, name) { 
+                const mesh = new THREE.Mesh(geom, getBaseMat()); 
+                mesh.geometry.computeBoundingBox(); const box = mesh.geometry.boundingBox;
+                mesh.position.set(0, -box.min.y, 0); 
+                mesh.userData = { isBox: false, isText: false, type: name, rounding: 0 }; 
+                freeformGroup.add(mesh); freeObjects.push(mesh); selectFreeObj(mesh); freeHistory.push({ type: 'add', object: mesh }); 
+            }
+            
+            function addFreeformBox(w, h, d, name, tplId = null) {
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), getBaseMat()); 
+                mesh.position.set(0, h/2, 0); 
+                mesh.userData = { isBox: true, isText: false, type: name, rounding: 0, bW: w, bH: h, bD: d, templateId: tplId }; 
                 freeformGroup.add(mesh); freeObjects.push(mesh); selectFreeObj(mesh); freeHistory.push({ type: 'add', object: mesh });
-            });
-        }
-
-        function selectFreeObj(obj) {
-            if (!obj) return;
-            freeSelected = obj; transformControl.attach(obj); selectionBox.setFromObject(obj); selectionBox.visible = true;
-            document.getElementById('right-panel').style.display = 'block'; document.getElementById('props-parametric').style.display = 'none'; document.getElementById('props-freeform').style.display = 'block';
-            document.getElementById('prop-title').innerText = "Úprava: " + obj.userData.type; 
-            document.getElementById('prop-color').value = '#' + obj.material.color.getHexString();
-            document.getElementById('c_wireframe').checked = obj.material.wireframe; 
-            document.getElementById('prop-text-group').style.display = obj.userData.isText ? 'block' : 'none';
-            if(obj.userData.isText) document.getElementById('prop-text-input').value = obj.userData.text;
+            }
             
-            const btnUpdate = document.getElementById('updateCustomTplBtn'); const statusText = document.getElementById('tpl-status-text');
-            if (obj.userData.isBox) {
-                document.getElementById('block-templates').style.display = 'block';
-                if (obj.userData.templateId) {
-                    btnUpdate.disabled = false; btnUpdate.style.opacity = '1'; statusText.innerText = `Propojeno se šablonou: ${obj.userData.type}`;
-                } else { btnUpdate.disabled = true; btnUpdate.style.opacity = '0.3'; statusText.innerText = "Objekt není uložená šablona"; }
-            } else { document.getElementById('block-templates').style.display = 'none'; }
-            updateFreeProps();
-        }
+            function addFreeformText() {
+                loadFont('droid_sans_bold', (font) => {
+                    const tg = new TextGeometry("TEXT", { font: font, size: 10, height: 3, curveSegments: 4, bevelEnabled: false }); 
+                    tg.computeBoundingBox(); tg.translate(-0.5 * (tg.boundingBox.max.x - tg.boundingBox.min.x), 0, -3); 
+                    const mesh = new THREE.Mesh(tg, getBaseMat()); 
+                    mesh.rotation.x = -Math.PI / 2; 
+                    mesh.position.set(0, 3, 0); 
+                    mesh.userData = { isBox: false, isText: true, text: "TEXT", type: 'Text', rounding: 0 }; 
+                    freeformGroup.add(mesh); freeObjects.push(mesh); selectFreeObj(mesh); freeHistory.push({ type: 'add', object: mesh });
+                });
+            }
 
-        function updateFreeProps() {
-            if (!freeSelected) return;
-            const size = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3());
-            document.getElementById('prop-size-x').value = size.x.toFixed(1); document.getElementById('prop-size-y').value = size.y.toFixed(1); document.getElementById('prop-size-z').value = size.z.toFixed(1);
-        }
+            function selectFreeObj(obj) {
+                if (!obj) return;
+                freeSelected = obj; transformControl.attach(obj); selectionBox.setFromObject(obj); selectionBox.visible = true;
+                document.getElementById('right-panel').style.display = 'block'; document.getElementById('props-parametric').style.display = 'none'; document.getElementById('props-freeform').style.display = 'block';
+                document.getElementById('prop-title').innerText = "Úprava: " + obj.userData.type; 
+                document.getElementById('prop-color').value = '#' + obj.material.color.getHexString();
+                document.getElementById('c_wireframe').checked = obj.material.wireframe; 
+                document.getElementById('prop-text-group').style.display = obj.userData.isText ? 'block' : 'none';
+                if(obj.userData.isText) document.getElementById('prop-text-input').value = obj.userData.text;
+                
+                const btnUpdate = document.getElementById('updateCustomTplBtn'); const statusText = document.getElementById('tpl-status-text');
+                if (obj.userData.isBox) {
+                    document.getElementById('block-templates').style.display = 'block';
+                    if (obj.userData.templateId) {
+                        btnUpdate.disabled = false; btnUpdate.style.opacity = '1'; statusText.innerText = `Propojeno se šablonou: ${obj.userData.type}`;
+                    } else { btnUpdate.disabled = true; btnUpdate.style.opacity = '0.3'; statusText.innerText = "Objekt není uložená šablona"; }
+                } else { document.getElementById('block-templates').style.display = 'none'; }
+                updateFreeProps();
+            }
 
-        document.getElementById('prop-color').addEventListener('input', (e) => { if(freeSelected) freeSelected.material.color.set(e.target.value); });
-        document.getElementById('c_wireframe').addEventListener('change', (e) => { if(freeSelected){ freeSelected.material.wireframe = e.target.checked; freeSelected.material.needsUpdate = true; } });
-
-        document.getElementById('saveCustomTplBtn').addEventListener('click', () => {
-            if (!freeSelected || !freeSelected.userData.isBox) return;
-            const name = prompt("Název tvé nové podložky:", "Moje šablona"); if(!name) return;
-            const size = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3());
-            const newId = Date.now(); customTemplates.push({ id: newId, name: name, mode: 'FREEFORM', w: size.x, h: size.y, d: size.z });
-            freeSelected.userData.templateId = newId; freeSelected.userData.type = name; saveCustomTemplates(); selectFreeObj(freeSelected); alert("Uloženo jako nová šablona.");
-        });
-
-        document.getElementById('updateCustomTplBtn').addEventListener('click', () => {
-            if (!freeSelected || !freeSelected.userData.templateId) return;
-            const tplId = freeSelected.userData.templateId; const tpl = customTemplates.find(t => t.id === tplId);
-            if(tpl && tpl.mode === 'FREEFORM') {
+            function updateFreeProps() {
+                if (!freeSelected) return;
                 const size = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3());
-                tpl.w = size.x; tpl.h = size.y; tpl.d = size.z; saveCustomTemplates(); alert("Šablona '"+tpl.name+"' byla úspěšně přepsána.");
+                document.getElementById('prop-size-x').value = size.x.toFixed(1); document.getElementById('prop-size-y').value = size.y.toFixed(1); document.getElementById('prop-size-z').value = size.z.toFixed(1);
             }
-        });
 
-        function saveCustomTemplates() { localStorage.setItem('my_templates', JSON.stringify(customTemplates)); renderCustomTemplates(); }
+            document.getElementById('prop-color').addEventListener('input', (e) => { if(freeSelected) freeSelected.material.color.set(e.target.value); });
+            document.getElementById('c_wireframe').addEventListener('change', (e) => { if(freeSelected){ freeSelected.material.wireframe = e.target.checked; freeSelected.material.needsUpdate = true; } });
 
-        window.loadCustomTemplate = function(id) { 
-            const tpl = customTemplates.find(t => t.id === id); 
-            if(tpl) { 
-                if (tpl.mode === 'PARAMETRIC') {
-                    setMode('parametric'); Object.assign(params, tpl.params); currentParametricTplId = id;
-                    syncParamUI(); generateParametric(); updateParametricTplUI();
-                } else { setMode('freeform'); addFreeformBox(tpl.w, tpl.h, tpl.d, tpl.name, tpl.id); }
-            } 
-        };
-        window.deleteCustomTemplate = function(id) { if(confirm("Smazat šablonu?")) { const idx = customTemplates.findIndex(t => t.id === id); if(idx > -1) { customTemplates.splice(idx, 1); saveCustomTemplates(); } } };
-        
-        function renderCustomTemplates() {
-            const list = document.getElementById('custom-templates-list'); list.innerHTML = '';
-            if(customTemplates.length === 0) { list.innerHTML = '<div style="color:#666; font-size:12px; padding:10px;">Zatím žádné vlastní šablony.</div>'; return; }
-            customTemplates.forEach(t => {
-                const div = document.createElement('div'); div.className = 'custom-tpl-item';
-                let desc = t.mode === 'PARAMETRIC' ? 'Parametrický štítek' : `${Math.round(t.w)}x${Math.round(t.h)}x${Math.round(t.d)} mm`;
-                div.innerHTML = `<button class="template-btn" onclick="loadCustomTemplate(${t.id})">★ ${t.name}<span style="display:block;font-size:10px;color:#aaa;font-weight:normal;">${desc}</span></button><button class="del-btn" onclick="deleteCustomTemplate(${t.id})">✖</button>`;
-                list.appendChild(div);
+            document.getElementById('saveCustomTplBtn').addEventListener('click', () => {
+                if (!freeSelected || !freeSelected.userData.isBox) return;
+                const name = prompt("Název tvé nové podložky:", "Moje šablona"); if(!name) return;
+                const size = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3());
+                const newId = Date.now(); customTemplates.push({ id: newId, name: name, mode: 'FREEFORM', w: size.x, h: size.y, d: size.z });
+                freeSelected.userData.templateId = newId; freeSelected.userData.type = name; saveCustomTemplates(); selectFreeObj(freeSelected); alert("Uloženo jako nová šablona.");
             });
-        }
 
-        document.getElementById('undoBtn').addEventListener('click', freeUndo);
-        document.getElementById('addCubeBtn').addEventListener('click', () => addFreeformBox(10, 10, 10, 'Kostka', null));
-        document.getElementById('addSphereBtn').addEventListener('click', () => addFreeformPrimitive(new THREE.SphereGeometry(5,32,32), 'Koule'));
-        document.getElementById('addCylinderBtn').addEventListener('click', () => addFreeformPrimitive(new THREE.CylinderGeometry(5,5,10,32), 'Válec'));
-        document.getElementById('addConeBtn').addEventListener('click', () => addFreeformPrimitive(new THREE.ConeGeometry(5,10,32), 'Kužel'));
-        document.getElementById('addTorusBtn').addEventListener('click', () => { const g = new THREE.TorusGeometry(4,1.5,16,50); g.rotateX(-Math.PI/2); addFreeformPrimitive(g, 'Prstenec'); });
-        document.getElementById('addTextBtn').addEventListener('click', addFreeformText);
-        document.getElementById('deleteBtn').addEventListener('click', () => {
-            if (freeSelected && currentMode === 'FREEFORM') {
-                freeHistory.push({ type: 'delete', object: freeSelected }); freeformGroup.remove(freeSelected); freeObjects.splice(freeObjects.indexOf(freeSelected), 1);
-                freeSelected = null; transformControl.detach(); selectionBox.visible = false; document.getElementById('right-panel').style.display = 'none';
-            }
-        });
-
-        const modes = ['translate', 'rotate', 'scale'];
-        modes.forEach(m => { document.getElementById('mode-' + m).addEventListener('click', (e) => { transformControl.setMode(m); document.querySelectorAll('.tool-icon').forEach(icon => icon.classList.remove('active-tool')); e.target.classList.add('active-tool'); }); });
-
-        function handleScaleProp(axis, e) {
-            const v = parseFloat(e.target.value); if(!freeSelected || v <= 0 || isNaN(v)) return;
-            const cur = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3())[axis];
-            if(cur > 0) { freeSelected.scale[axis] *= (v / cur); selectionBox.update(); }
-        }
-        document.getElementById('prop-size-x').addEventListener('change', e => handleScaleProp('x', e)); 
-        document.getElementById('prop-size-y').addEventListener('change', e => handleScaleProp('y', e)); 
-        document.getElementById('prop-size-z').addEventListener('change', e => handleScaleProp('z', e));
-
-        document.getElementById('prop-text-input').addEventListener('input', (e) => {
-            if(!freeSelected || !freeSelected.userData.isText) return;
-            freeSelected.userData.text = e.target.value; freeSelected.geometry.dispose();
-            loadFont('droid_sans_bold', (font) => {
-                const tg = new TextGeometry(e.target.value, { font: font, size: 10, height: 3, curveSegments: 4, bevelEnabled: false });
-                tg.computeBoundingBox(); tg.translate(-0.5 * (tg.boundingBox.max.x - tg.boundingBox.min.x), 0, -3);
-                freeSelected.geometry = tg; selectionBox.update(); updateFreeProps();
+            document.getElementById('updateCustomTplBtn').addEventListener('click', () => {
+                if (!freeSelected || !freeSelected.userData.templateId) return;
+                const tplId = freeSelected.userData.templateId; const tpl = customTemplates.find(t => t.id === tplId);
+                if(tpl && tpl.mode === 'FREEFORM') {
+                    const size = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3());
+                    tpl.w = size.x; tpl.h = size.y; tpl.d = size.z; saveCustomTemplates(); alert("Šablona '"+tpl.name+"' byla úspěšně přepsána.");
+                }
             });
-        });
 
-        const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
-        renderer.domElement.addEventListener('pointerdown', (e) => {
-            if(currentMode !== 'FREEFORM' || transformControl.dragging) return; 
-            if(e.clientX < 70 || (drawerOpen && e.clientX < 350) || (freeSelected && e.clientX > window.innerWidth - 380) || (e.clientX > 85 && e.clientX < 235 && e.clientY < 75)) return; 
+            function saveCustomTemplates() { localStorage.setItem('my_templates', JSON.stringify(customTemplates)); renderCustomTemplates(); }
+
+            window.loadCustomTemplate = function(id) { 
+                const tpl = customTemplates.find(t => t.id === id); 
+                if(tpl) { 
+                    if (tpl.mode === 'PARAMETRIC') {
+                        setMode('parametric'); Object.assign(params, tpl.params); currentParametricTplId = id;
+                        syncParamUI(); generateParametric(); updateParametricTplUI();
+                    } else { setMode('freeform'); addFreeformBox(tpl.w, tpl.h, tpl.d, tpl.name, tpl.id); }
+                } 
+            };
+            window.deleteCustomTemplate = function(id) { if(confirm("Smazat šablonu?")) { const idx = customTemplates.findIndex(t => t.id === id); if(idx > -1) { customTemplates.splice(idx, 1); saveCustomTemplates(); } } };
             
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(freeObjects, true);
-            if (intersects.length > 0) { let hit = intersects[0].object; while(hit.parent && !freeObjects.includes(hit)) hit = hit.parent; if(freeObjects.includes(hit)) selectFreeObj(hit); }
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if(currentMode !== 'FREEFORM') return;
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); freeUndo(); }
-            if (e.key === 'Shift') { transformControl.setTranslationSnap(5); transformControl.setRotationSnap(Math.PI/4); transformControl.setScaleSnap(0.25); }
-            if ((e.key === 'Delete' || e.key === 'Backspace') && freeSelected && document.activeElement.tagName !== "INPUT") document.getElementById('deleteBtn').click();
-        });
-        window.addEventListener('keyup', (e) => { if(e.key === 'Shift') { transformControl.setTranslationSnap(null); transformControl.setRotationSnap(null); transformControl.setScaleSnap(null); } });
-
-        // --- EXPORT ---
-        document.getElementById('btn-export').addEventListener('click', () => {
-            const exporter = new STLExporter(); let data = null;
-            const exportScene = new THREE.Scene();
-
-            if (currentMode === 'PARAMETRIC') {
-                if(parametricGroup.children.length === 0) return alert("Není co exportovat.");
-                const cloneGroup = parametricGroup.clone();
-                cloneGroup.traverse((child) => { if (child.isMesh && child.material) child.material.wireframe = false; });
-                exportScene.add(cloneGroup);
-                data = exporter.parse(exportScene, { binary: true });
-            } else {
-                if(freeObjects.length === 0) return alert("Není co exportovat.");
-                transformControl.detach(); selectionBox.visible = false;
-                const cloneGroup = freeformGroup.clone();
-                cloneGroup.traverse((child) => { if (child.isMesh && child.material) child.material.wireframe = false; });
-                exportScene.add(cloneGroup);
-                data = exporter.parse(exportScene, { binary: true });
-                if(freeSelected) { transformControl.attach(freeSelected); selectionBox.visible = true;}
+            function renderCustomTemplates() {
+                const list = document.getElementById('custom-templates-list'); list.innerHTML = '';
+                if(customTemplates.length === 0) { list.innerHTML = '<div style="color:#666; font-size:12px; padding:10px;">Zatím žádné vlastní šablony.</div>'; return; }
+                customTemplates.forEach(t => {
+                    const div = document.createElement('div'); div.className = 'custom-tpl-item';
+                    let desc = t.mode === 'PARAMETRIC' ? 'Parametrický štítek' : `${Math.round(t.w)}x${Math.round(t.h)}x${Math.round(t.d)} mm`;
+                    div.innerHTML = `<button class="template-btn" onclick="loadCustomTemplate(${t.id})">★ ${t.name}<span style="display:block;font-size:10px;color:#aaa;font-weight:normal;">${desc}</span></button><button class="del-btn" onclick="deleteCustomTemplate(${t.id})">✖</button>`;
+                    list.appendChild(div);
+                });
             }
-            const blob = new Blob([data], { type: 'application/octet-stream' }); 
-            const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-            link.download = currentMode === 'PARAMETRIC' ? (params.text || 'sablona') + '.stl' : 'vlastni_model.stl'; 
-            link.click();
-        });
 
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-        function animate() { requestAnimationFrame(animate); orbitControls.update(); renderer.render(scene, camera); } animate();
-    </script>
-</body>
-</html>
+            document.getElementById('undoBtn').addEventListener('click', freeUndo);
+            document.getElementById('addCubeBtn').addEventListener('click', () => addFreeformBox(10, 10, 10, 'Kostka', null));
+            document.getElementById('addSphereBtn').addEventListener('click', () => addFreeformPrimitive(new THREE.SphereGeometry(5,32,32), 'Koule'));
+            document.getElementById('addCylinderBtn').addEventListener('click', () => addFreeformPrimitive(new THREE.CylinderGeometry(5,5,10,32), 'Válec'));
+            document.getElementById('addConeBtn').addEventListener('click', () => addFreeformPrimitive(new THREE.ConeGeometry(5,10,32), 'Kužel'));
+            document.getElementById('addTorusBtn').addEventListener('click', () => { const g = new THREE.TorusGeometry(4,1.5,16,50); g.rotateX(-Math.PI/2); addFreeformPrimitive(g, 'Prstenec'); });
+            document.getElementById('addTextBtn').addEventListener('click', addFreeformText);
+            document.getElementById('deleteBtn').addEventListener('click', () => {
+                if (freeSelected && currentMode === 'FREEFORM') {
+                    freeHistory.push({ type: 'delete', object: freeSelected }); freeformGroup.remove(freeSelected); freeObjects.splice(freeObjects.indexOf(freeSelected), 1);
+                    freeSelected = null; transformControl.detach(); selectionBox.visible = false; document.getElementById('right-panel').style.display = 'none';
+                }
+            });
+
+            const modes = ['translate', 'rotate', 'scale'];
+            modes.forEach(m => { document.getElementById('mode-' + m).addEventListener('click', (e) => { transformControl.setMode(m); document.querySelectorAll('.tool-icon').forEach(icon => icon.classList.remove('active-tool')); e.target.classList.add('active-tool'); }); });
+
+            function handleScaleProp(axis, e) {
+                const v = parseFloat(e.target.value); if(!freeSelected || v <= 0 || isNaN(v)) return;
+                const cur = new THREE.Box3().setFromObject(freeSelected).getSize(new THREE.Vector3())[axis];
+                if(cur > 0) { freeSelected.scale[axis] *= (v / cur); selectionBox.update(); }
+            }
+            document.getElementById('prop-size-x').addEventListener('change', e => handleScaleProp('x', e)); 
+            document.getElementById('prop-size-y').addEventListener('change', e => handleScaleProp('y', e)); 
+            document.getElementById('prop-size-z').addEventListener('change', e => handleScaleProp('z', e));
+
+            document.getElementById('prop-text-input').addEventListener('input', (e) => {
+                if(!freeSelected || !freeSelected.userData.isText) return;
+                freeSelected.userData.text = e.target.value; freeSelected.geometry.dispose();
+                loadFont('droid_sans_bold', (font) => {
+                    const tg = new TextGeometry(e.target.value, { font: font, size: 10, height: 3, curveSegments: 4, bevelEnabled: false });
+                    tg.computeBoundingBox(); tg.translate(-0.5 * (tg.boundingBox.max.x - tg.boundingBox.min.x), 0, -3);
+                    freeSelected.geometry = tg; selectionBox.update(); updateFreeProps();
+                });
+            });
+
+            const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
+            renderer.domElement.addEventListener('pointerdown', (e) => {
+                if(currentMode !== 'FREEFORM' || transformControl.dragging) return; 
+                if(e.clientX < 70 || (drawerOpen && e.clientX < 350) || (freeSelected && e.clientX > window.innerWidth - 380) || (e.clientX > 85 && e.clientX < 235 && e.clientY < 75)) return; 
+                
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(freeObjects, true);
+                if (intersects.length > 0) { let hit = intersects[0].object; while(hit.parent && !freeObjects.includes(hit)) hit = hit.parent; if(freeObjects.includes(hit)) selectFreeObj(hit); }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if(currentMode !== 'FREEFORM') return;
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); freeUndo(); }
+                if (e.key === 'Shift') { transformControl.setTranslationSnap(5); transformControl.setRotationSnap(Math.PI/4); transformControl.setScaleSnap(0.25); }
+                if ((e.key === 'Delete' || e.key === 'Backspace') && freeSelected && document.activeElement.tagName !== "INPUT") document.getElementById('deleteBtn').click();
+            });
+            window.addEventListener('keyup', (e) => { if(e.key === 'Shift') { transformControl.setTranslationSnap(null); transformControl.setRotationSnap(null); transformControl.setScaleSnap(null); } });
+
+            // --- EXPORT ---
+            document.getElementById('btn-export').addEventListener('click', () => {
+                const exporter = new STLExporter(); let data = null;
+                const exportScene = new THREE.Scene();
+
+                if (currentMode === 'PARAMETRIC') {
+                    if(parametricGroup.children.length === 0) return alert("Není co exportovat.");
+                    const cloneGroup = parametricGroup.clone();
+                    cloneGroup.traverse((child) => { if (child.isMesh && child.material) child.material.wireframe = false; });
+                    exportScene.add(cloneGroup);
+                    data = exporter.parse(exportScene, { binary: true });
+                } else {
+                    if(freeObjects.length === 0) return alert("Není co exportovat.");
+                    transformControl.detach(); selectionBox.visible = false;
+                    const cloneGroup = freeformGroup.clone();
+                    cloneGroup.traverse((child) => { if (child.isMesh && child.material) child.material.wireframe = false; });
+                    exportScene.add(cloneGroup);
+                    data = exporter.parse(exportScene, { binary: true });
+                    if(freeSelected) { transformControl.attach(freeSelected); selectionBox.visible = true;}
+                }
+                const blob = new Blob([data], { type: 'application/octet-stream' }); 
+                const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+                link.download = currentMode === 'PARAMETRIC' ? (params.text || 'sablona') + '.stl' : 'vlastni_model.stl'; 
+                link.click();
+            });
+
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            function animate() { requestAnimationFrame(animate); orbitControls.update(); renderer.render(scene, camera); } animate();
+        </script>
+    </body>
+    </html>
